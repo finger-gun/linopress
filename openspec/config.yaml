@@ -1,0 +1,70 @@
+schema: spec-driven
+
+context: |
+  Project: LinoPress
+  Purpose:
+    - Agentic WordPress creator: prompt → build → verify (browser) → self-heal → ship.
+    - Target users: small businesses + personal blogs (not enterprise/high-scale).
+    - Core promise: deterministic, reproducible builds with portable output (no lock-in).
+
+  Core principles (non-negotiable):
+    - Tool-driven execution: LLM must not freely mutate the system; only allowlisted tools can change state.
+    - Isolation by default: one site = one sandbox (Compose first; K8s later).
+    - Verification first: every build must run CLI validation + agent-browser smoke test.
+    - Self-healing: attempt minimal repairs (<=2 cycles) before failing; always produce a report.
+    - Portability: exports must include wp-content, DB dump, and manifest.json.
+
+  Tech stack (v0.1):
+    - Agent runtime: Sisu (@sisu-ai/*), https://github.com/finger-gun/sisu
+    - Browser automation: vercel-labs/agent-browser (CLI-based), https://github.com/vercel-labs/agent-browser
+    - WordPress automation: wp-cli, https://github.com/wp-cli/wp-cli
+    - Runtime isolation: Docker Compose, https://docs.docker.com/compose/
+    - Language: Node.js, https://nodejs.org/ + TypeScript for agent-api/skills, https://www.typescriptlang.org/
+    - DB: MariaDB, https://mariadb.org/
+    - Storage: local filesystem volumes
+    - WordPress: https://wordpress.org/, PHP, https://www.php.net/
+
+  Runtime model:
+    - Per-site stack: wordpress + db + agent-api (+ optional headless browser container)
+    - Shared writable volume: /var/www/html/wp-content mounted into wordpress and agent-api
+    - Browser allowlist: only local WordPress base URL (no external navigation by default)
+
+  Security & safety:
+    - Terminal tool is command-allowlisted and root-scoped.
+    - Filesystem writes restricted to wp-content (+ temp).
+    - No Docker socket exposure.
+    - Secrets must never appear in model-visible text/logs; use env/state in skill code.
+
+  Theme philosophy:
+    - Support modes: parent theme (default), blank block theme, user-selected theme.
+    - Ship 2–3 style seeds as inspiration (tokens/patterns), but do not restrict output.
+    - Prefer block themes for “from scratch” to reduce PHP/template fragility.
+
+  Product boundaries (v0.1 non-goals):
+    - Not a hosting platform.
+    - Not multisite management.
+    - Not unrestricted external browsing.
+    - Not unrestricted shell access.
+    - No WooCommerce automation in MVP (future skill).
+
+rules:
+  proposal:
+    - State goals and explicit non-goals.
+    - Define success criteria as an end-to-end demo scenario.
+    - Call out security constraints and sandbox model.
+
+  specs:
+    - Use MUST/SHOULD/MAY language.
+    - Include: inputs, outputs (BuildReport), validation requirements, self-healing behavior.
+    - Specify sandbox constraints (no external browsing; root-scoped file writes).
+
+  design:
+    - Include component diagram (text is fine) and data models (SiteSpec, BuildReport).
+    - Define tool allowlists and URL allowlists.
+    - Describe self-healing loop and fallback policies (e.g., blank→parent fallback).
+    - Keep design implementation-ready for Node/TS + Sisu.
+
+  tasks:
+    - Break into phases: runtime, tools, skills, e2e demos, hardening.
+    - Each task should be testable/verifyable (what “done” means).
+    - Include at least 3 demo prompts and export redeploy verification.
