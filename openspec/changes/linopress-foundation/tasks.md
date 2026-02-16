@@ -1,21 +1,21 @@
 ## 1. Project Initialization and Setup
 
-- [ ] 1.1 Initialize Node.js project with TypeScript configuration
-- [ ] 1.2 Install core dependencies: Sisu framework 
-- [ ] 1.3 Configure TypeScript compiler options and build scripts
-- [ ] 1.4 Set up project directory structure (docker/, agent-api/, tools/, schemas/)
-- [ ] 1.5 Create .gitignore and environment variable templates
-- [ ] 1.6 Set up ESLint and Prettier for code quality
+- [x] 1.1 Initialize Node.js project with TypeScript configuration
+- [x] 1.2 Install core dependencies: Sisu framework 
+- [x] 1.3 Configure TypeScript compiler options and build scripts
+- [x] 1.4 Set up project directory structure (docker/, agent-api/, tools/, schemas/)
+- [x] 1.5 Create .gitignore and environment variable templates
+- [x] 1.6 Set up ESLint and Prettier for code quality
 
 ## 2. Docker Compose Runtime Infrastructure
 
-- [ ] 2.1 Create base docker-compose.yml template for per-site stacks
-- [ ] 2.2 Configure wordpress service (nginx + php-fpm, wp-content volume mount)
-- [ ] 2.3 Configure db service (MariaDB with persistent volume)
-- [ ] 2.4 Configure agent-api service (Node.js with shared wp-content volume)
-- [ ] 2.5 Configure optional browser service (browserless/chrome)
-- [ ] 2.6 Define Docker networking and port mappings
-- [ ] 2.7 Create Dockerfile for custom agent-api image
+- [x] 2.1 Create base docker-compose.yml template for per-site stacks
+- [x] 2.2 Configure wordpress service (nginx + php-fpm, wp-content volume mount)
+- [x] 2.3 Configure db service (MariaDB with persistent volume)
+- [x] 2.4 Configure agent-api service (Node.js with shared wp-content volume)
+- [x] 2.5 Configure optional browser service (browserless/chrome)
+- [x] 2.6 Define Docker networking and port mappings
+- [x] 2.7 Create Dockerfile for custom agent-api image
 - [ ] 2.8 Implement site stack provisioning CLI command
 - [ ] 2.9 Implement site stack lifecycle management (start, stop, destroy)
 - [ ] 2.10 Add health checks for wordpress and db containers

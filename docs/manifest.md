@@ -116,6 +116,11 @@ Shared writable volume:
 
 * /var/www/html/wp-content
 
+Tooling baseline:
+
+* Monorepo: Turborepo
+* Package manager: pnpm
+
 Each environment is disposable and reproducible.
 
 ---

@@ -1,0 +1,39 @@
+{
+  "name": "linopress",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write ."
+  },
+  "dependencies": {
+    "@sisu-ai/adapter-anthropic": "latest",
+    "@sisu-ai/adapter-openai": "latest",
+    "@sisu-ai/core": "latest",
+    "@sisu-ai/mw-conversation-buffer": "latest",
+    "@sisu-ai/mw-error-boundary": "latest",
+    "@sisu-ai/mw-register-tools": "latest",
+    "@sisu-ai/mw-skills": "latest",
+    "@sisu-ai/mw-tool-calling": "latest",
+    "@sisu-ai/mw-trace-viewer": "latest",
+    "dotenv": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4",
+    "turbo": "latest"
+  }
+}

@@ -20,6 +20,8 @@ context: |
     - WordPress automation: wp-cli, https://github.com/wp-cli/wp-cli
     - Runtime isolation: Docker Compose, https://docs.docker.com/compose/
     - Language: Node.js, https://nodejs.org/ + TypeScript for agent-api/skills, https://www.typescriptlang.org/
+    - Monorepo tooling: Turborepo, https://turbo.build/
+    - Package manager: pnpm, https://pnpm.io/
     - DB: MariaDB, https://mariadb.org/
     - Storage: local filesystem volumes
     - WordPress: https://wordpress.org/, PHP, https://www.php.net/
