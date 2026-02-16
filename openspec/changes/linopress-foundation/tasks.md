@@ -1,7 +1,7 @@
 ## 1. Project Initialization and Setup
 
 - [ ] 1.1 Initialize Node.js project with TypeScript configuration
-- [ ] 1.2 Install core dependencies: Sisu framework (@sisu-ai/core, @sisu-ai/runtime)
+- [ ] 1.2 Install core dependencies: Sisu framework 
 - [ ] 1.3 Configure TypeScript compiler options and build scripts
 - [ ] 1.4 Set up project directory structure (docker/, agent-api/, tools/, schemas/)
 - [ ] 1.5 Create .gitignore and environment variable templates
