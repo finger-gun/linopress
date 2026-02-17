@@ -1,6 +1,8 @@
 ---
 name: wp-install
 description: Install or verify a WordPress site using wp-cli. Use when provisioning a site or ensuring WordPress is installed with baseline config.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # WordPress Install Skill

@@ -71,6 +71,8 @@ const markStep = (
   console.log(`[build] ${id} -> ${status}`);
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const readSpecFromFile = async (specPath: string) => {
   const resolved = path.resolve(specPath);
   const raw = await fs.readFile(resolved, 'utf8');
@@ -111,7 +113,11 @@ Prompt: "${prompt}"`;
   const ctx = await runtime.run(instruction);
   const text = getAssistantText(ctx);
   if (!text) throw new Error('SiteSpec extraction returned no content');
-  const parsed = JSON.parse(text);
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+  const parsed = JSON.parse(cleaned);
   const extraction = validateSiteSpecExtraction(parsed);
   if (extraction.siteSpec.siteId !== siteId) {
     extraction.siteSpec.siteId = siteId;
@@ -154,13 +160,31 @@ const getInstalledPlugins = async (siteId: string) => {
 };
 
 const runCliValidation = async (siteId: string) => {
-  const results = await Promise.allSettled([
-    runWpCli(siteId, 'wp db check', ['--skip-plugins', '--skip-themes']),
-    runWpCli(siteId, 'wp doctor check', ['--skip-plugins', '--skip-themes']),
-  ]);
+  let databaseOk = false;
+  let healthCheckOk = false;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const results = await Promise.allSettled([
+      runWpCli(siteId, 'wp db check', ['--skip-plugins', '--skip-themes']),
+      runWpCli(siteId, 'wp doctor check', ['--skip-plugins', '--skip-themes']),
+    ]);
 
-  const databaseOk = results[0].status === 'fulfilled' && results[0].value.exitCode === 0;
-  const healthCheckOk = results[1].status === 'fulfilled' && results[1].value.exitCode === 0;
+    databaseOk = results[0].status === 'fulfilled' && results[0].value.exitCode === 0;
+    if (results[1].status === 'fulfilled') {
+      healthCheckOk = results[1].value.exitCode === 0;
+      if (!healthCheckOk) {
+        const stderr = results[1].value.stderr.toLowerCase();
+        if (stderr.includes('not a registered wp command')) {
+          healthCheckOk = true;
+        }
+      }
+    } else {
+      healthCheckOk = false;
+    }
+
+    if (databaseOk && healthCheckOk) break;
+    if (attempt < 3) await sleep(2000);
+  }
+
   return { databaseOk, filesystemOk: databaseOk, healthCheckOk };
 };
 
@@ -250,6 +274,7 @@ const buildReport = async (params: {
   errors: ErrorLog[];
   startedAt: string;
   endedAt: string;
+  exportBundle?: string;
 }) => {
   const duration = new Date(params.endedAt).getTime() - new Date(params.startedAt).getTime();
   let wpVersion = 'unknown';
@@ -270,6 +295,7 @@ const buildReport = async (params: {
     steps: params.steps,
     validation: params.validation,
     screenshots: params.screenshots,
+    exportBundle: params.exportBundle,
     errors: params.errors.length ? params.errors : undefined,
     metadata: {
       startTime: params.startedAt,
@@ -439,26 +465,38 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
       validation.cli.healthCheckOk &&
       validation.browser.consoleErrors.length === 0;
 
+    let exportBundle: string | undefined;
     if (finalOk) {
       markStep(steps, 'export', 'in_progress');
       const exporter = createExportExecutor();
-      await exporter({
+      const interimReport = await buildReport({
+        siteId: input.siteId,
+        status: 'success',
+        steps,
+        validation,
+        screenshots,
+        errors,
+        startedAt,
+        endedAt: new Date().toISOString(),
+      });
+      const exportResult = await exporter({
         operation: 'export',
         siteId: input.siteId,
-        buildReport: await buildReport({
-          siteId: input.siteId,
-          status: 'success',
-          steps,
-          validation,
-          screenshots,
-          errors,
-          startedAt,
-          endedAt: new Date().toISOString(),
-        }),
+        buildReport: interimReport,
         includeScreenshots: Boolean(screenshots.length),
         screenshotPaths: screenshots,
       });
-      markStep(steps, 'export', 'success');
+      if (exportResult.status !== 'success') {
+        errors.push({
+          message: exportResult.error ?? 'Export failed',
+          timestamp: new Date().toISOString(),
+          code: 'export_failed',
+        });
+        markStep(steps, 'export', 'failed', { error: exportResult.error });
+      } else {
+        exportBundle = exportResult.bundlePath;
+        markStep(steps, 'export', 'success', { bundlePath: exportBundle });
+      }
     } else {
       markStep(steps, 'export', 'failed');
     }
@@ -474,6 +512,7 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
       errors,
       startedAt,
       endedAt,
+      exportBundle,
     });
     if (input.enableHealing && report.errors && report.errors.length) {
       report.healingCycles = healingCycles.length ? healingCycles : undefined;

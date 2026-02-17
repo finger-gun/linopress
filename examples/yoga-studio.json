@@ -1,0 +1,27 @@
+{
+  "prompt": "Create a modern yoga studio website with pricing, schedule, testimonials, and contact form.",
+  "siteId": "yoga-studio",
+  "themeMode": "parent",
+  "styleSeed": "minimalist",
+  "plugins": ["contact-form-7"],
+  "pages": [
+    { "title": "Home", "slug": "home", "content": { "id": "homepage" } },
+    { "title": "About", "slug": "about", "content": { "id": "about" } },
+    { "title": "Pricing", "slug": "pricing", "content": { "id": "pricing" } },
+    { "title": "Schedule", "slug": "schedule", "content": { "id": "services" } },
+    { "title": "Testimonials", "slug": "testimonials", "content": { "id": "testimonials" } },
+    { "title": "Contact", "slug": "contact", "content": { "id": "contact" } }
+  ],
+  "language": "en_US",
+  "timezone": "America/Los_Angeles",
+  "permalinkStructure": "/%postname%/",
+  "business": {
+    "name": "Solstice Yoga Studio",
+    "tagline": "Breathe deeply. Move mindfully.",
+    "description": "Solstice Yoga Studio offers restorative and vinyasa classes for all levels, plus private sessions and workshops.",
+    "phone": "(555) 123-4567",
+    "email": "hello@solsticeyoga.com",
+    "address": "124 Market Street, San Francisco, CA",
+    "hours": "Mon-Fri 6am-8pm, Sat-Sun 8am-6pm"
+  }
+}

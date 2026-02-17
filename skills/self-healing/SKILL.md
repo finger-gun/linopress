@@ -1,6 +1,8 @@
 ---
 name: self-healing
 description: Attempt bounded healing cycles based on validation errors and re-run validation. Use after failed validation.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Self-Healing Skill

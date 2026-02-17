@@ -6,6 +6,7 @@ export const WP_CLI_ALLOWLIST = [
   'wp comment list',
   'wp config set',
   'wp core install',
+  'wp core is-installed',
   'wp core version',
   'wp db reset',
   'wp plugin install',
@@ -27,11 +28,13 @@ export const WP_CLI_ALLOWLIST = [
   'wp rewrite flush',
   'wp rewrite structure',
   'wp menu create',
+  'wp menu list',
   'wp menu item add-*',
   'wp menu location assign',
   'wp option get',
   'wp option update',
   'wp language core install',
+  'wp language core list',
   'wp db export',
   'wp db check',
   'wp doctor check',
@@ -77,6 +80,33 @@ export const validateWpCliCommand = (command: string) => {
   }
 };
 
+const normalizeWpCommand = (command: string) => {
+  const trimmed = command.trim();
+  if (trimmed.startsWith('wp ')) return trimmed;
+  return `wp ${trimmed}`;
+};
+
+const splitWpCliInput = (command: string, args?: string[]) => {
+  const normalized = normalizeWpCommand(command);
+  if (args && args.length > 0) {
+    return { command: normalized, args };
+  }
+
+  const tokens = normalized.split(/\s+/);
+  if (tokens.length <= 2) {
+    return { command: normalized, args: [] as string[] };
+  }
+
+  for (let i = tokens.length; i >= 2; i -= 1) {
+    const candidate = tokens.slice(0, i).join(' ');
+    if (matchesAllowlist(candidate, WP_CLI_ALLOWLIST)) {
+      return { command: candidate, args: tokens.slice(i) };
+    }
+  }
+
+  return { command: normalized, args: [] as string[] };
+};
+
 const shouldParseJson = (args?: string[]) =>
   Boolean(args?.some((arg) => arg === '--format=json' || arg === '--format=json-pretty'));
 
@@ -113,16 +143,18 @@ export const createWpCliTool = (executor: WpCliExecutor): Tool<WpCliInput> => ({
   schema: wpCliSchema,
   handler: async ({ command, args }) => {
     const startedAt = Date.now();
-    const safeArgs = sanitizeArgs(args);
-    logWpCliStart(command, safeArgs);
+    const split = splitWpCliInput(command, args);
+    const safeArgs = sanitizeArgs(split.args);
+    const normalizedCommand = split.command;
+    logWpCliStart(normalizedCommand, safeArgs);
 
     try {
-      validateWpCliCommand(command);
-      const result = await executor({ command, args: safeArgs });
-      logWpCliResult(command, safeArgs, result, Date.now() - startedAt);
+      validateWpCliCommand(normalizedCommand);
+      const result = await executor({ command: normalizedCommand, args: safeArgs });
+      logWpCliResult(normalizedCommand, safeArgs, result, Date.now() - startedAt);
       return parseJsonOutput(result, safeArgs);
     } catch (error) {
-      logWpCliError(command, safeArgs, error, Date.now() - startedAt);
+      logWpCliError(normalizedCommand, safeArgs, error, Date.now() - startedAt);
       throw error;
     }
   },

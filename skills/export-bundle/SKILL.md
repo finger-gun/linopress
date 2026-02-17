@@ -1,6 +1,8 @@
 ---
 name: export-bundle
 description: Orchestrate site export after validation, including manifest generation and bundle verification.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Export Bundle Skill
