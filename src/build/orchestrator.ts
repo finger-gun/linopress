@@ -11,6 +11,7 @@ import {
   type AgentRuntimeOptions,
   type LlmProvider,
 } from '../agent/runtime.js';
+import { loadPrompt } from './prompts.js';
 
 export type BuildOrchestratorInput = {
   siteId: string;
@@ -117,6 +118,161 @@ const getAssistantText = (ctx: any) => {
   return '';
 };
 
+// Verify that all expected pages were created with content, navigation exists, and front page is set.
+// Returns a list of issues found, or empty array if everything looks good.
+const verifyContent = async (
+  siteId: string,
+  siteSpec: SiteSpec,
+): Promise<{ issues: string[]; details: Record<string, unknown> }> => {
+  const issues: string[] = [];
+  const details: Record<string, unknown> = {};
+
+  // 1. Check that expected pages exist and are published with content
+  const pageListResult = await runWpCli(siteId, 'wp post list', [
+    '--post_type=page',
+    '--post_status=any',
+    '--fields=ID,post_title,post_name,post_status,post_content',
+    '--format=json',
+  ]);
+
+  let existingPages: Array<{
+    ID: string;
+    post_title: string;
+    post_name: string;
+    post_status: string;
+    post_content: string;
+  }> = [];
+  try {
+    existingPages = JSON.parse(pageListResult.stdout.trim());
+  } catch {
+    issues.push('Could not retrieve page list from WordPress');
+    return { issues, details };
+  }
+
+  details.existingPages = existingPages.map((p) => ({
+    id: p.ID,
+    title: p.post_title,
+    slug: p.post_name,
+    status: p.post_status,
+    contentLength: (p.post_content ?? '').length,
+  }));
+
+  const expectedPages = siteSpec.pages ?? [];
+  for (const expectedPage of expectedPages) {
+    const slug = expectedPage.slug ?? expectedPage.title.toLowerCase().replace(/\s+/g, '-');
+    const found = existingPages.find(
+      (p) =>
+        p.post_name === slug || p.post_title.toLowerCase() === expectedPage.title.toLowerCase(),
+    );
+
+    if (!found) {
+      issues.push(`Missing page: "${expectedPage.title}" (slug: ${slug}) — not found in WordPress`);
+    } else if (found.post_status !== 'publish') {
+      issues.push(
+        `Page "${expectedPage.title}" exists but has status "${found.post_status}" — should be "publish"`,
+      );
+    } else if (!found.post_content || found.post_content.trim().length < 50) {
+      issues.push(
+        `Page "${expectedPage.title}" (ID ${found.ID}) has empty or minimal content (${(found.post_content ?? '').length} chars) — needs rich block content`,
+      );
+    }
+  }
+
+  // 2. Check default content was cleaned up
+  const defaultPosts = existingPages.filter(
+    (p) => p.post_name === 'sample-page' || p.post_title === 'Sample Page',
+  );
+  if (defaultPosts.length > 0) {
+    issues.push('Default "Sample Page" still exists — should be deleted');
+  }
+
+  const postListResult = await runWpCli(siteId, 'wp post list', [
+    '--post_type=post',
+    '--fields=ID,post_title,post_name',
+    '--format=json',
+  ]);
+  try {
+    const posts = JSON.parse(postListResult.stdout.trim());
+    const helloWorld = posts.find((p: { post_title: string }) => p.post_title === 'Hello world!');
+    if (helloWorld) {
+      issues.push('Default "Hello world!" post still exists — should be deleted');
+    }
+  } catch {
+    // ignore
+  }
+
+  // 3. Check front page is configured
+  const showOnFrontResult = await runWpCli(siteId, 'wp option get', ['show_on_front']);
+  const showOnFront = showOnFrontResult.stdout.trim();
+  if (showOnFront !== 'page') {
+    issues.push(
+      `Front page not configured: show_on_front is "${showOnFront}" — should be "page" for a static homepage`,
+    );
+  } else {
+    const pageOnFrontResult = await runWpCli(siteId, 'wp option get', ['page_on_front']);
+    const pageOnFront = pageOnFrontResult.stdout.trim();
+    if (!pageOnFront || pageOnFront === '0') {
+      issues.push('Front page is set to "page" mode but page_on_front is not set to any page ID');
+    }
+    details.pageOnFront = pageOnFront;
+  }
+
+  // 4. Check navigation menu exists and has items
+  const menuListResult = await runWpCli(siteId, 'wp menu list', ['--format=json']);
+  let menus: Array<{ term_id: string; name: string; count: string }> = [];
+  try {
+    menus = JSON.parse(menuListResult.stdout.trim());
+  } catch {
+    // ignore
+  }
+
+  if (menus.length === 0) {
+    issues.push(
+      'No navigation menu exists — create a menu with all pages and assign to primary location',
+    );
+  } else {
+    const primaryMenu = menus[0];
+    const itemCount = parseInt(primaryMenu.count ?? '0', 10);
+    if (itemCount === 0) {
+      issues.push(
+        `Navigation menu "${primaryMenu.name}" exists but has 0 items — add pages to the menu`,
+      );
+    }
+    details.menus = menus;
+  }
+
+  // 5. Flush rewrite rules to ensure permalinks work
+  try {
+    await runWpCli(siteId, 'wp rewrite flush', ['--hard']);
+    console.log('[content-verify] Flushed rewrite rules');
+  } catch (error) {
+    console.log(
+      `[content-verify] Warning: rewrite flush failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  return { issues, details };
+};
+
+// Run a targeted content repair pass using the LLM to fix specific issues.
+const repairContent = async (
+  runtimeOptions: AgentRuntimeOptions,
+  siteSpec: SiteSpec,
+  originalPrompt: string,
+  issues: string[],
+) => {
+  const runtime = createAgentRuntime(runtimeOptions);
+  const issueList = issues.map((issue, i) => `${i + 1}. ${issue}`).join('\n');
+  const originalPromptHint = originalPrompt ? `\nOriginal user prompt: "${originalPrompt}"` : '';
+  const instruction = await loadPrompt('content-repair', {
+    issueList,
+    originalPromptHint,
+    siteSpec: JSON.stringify(siteSpec),
+  });
+
+  await runtime.run(instruction);
+};
+
 // Capture full-page screenshots of the site's pages using the browser tool.
 const capturePageScreenshots = async (
   siteId: string,
@@ -203,6 +359,17 @@ const runVisualReview = async (
   markStep(steps, 'review', 'in_progress');
   const reviewDetails: Array<{ cycle: number; issuesFound: number; issuesFixed: number }> = [];
 
+  // Pre-flight: gather current content state so the reviewer has functional context
+  let contentState = '';
+  try {
+    const { issues: preflightIssues } = await verifyContent(siteId, siteSpec);
+    if (preflightIssues.length > 0) {
+      contentState = `\n\nPre-flight check detected these functional issues:\n${preflightIssues.map((i, idx) => `${idx + 1}. ${i}`).join('\n')}`;
+    }
+  } catch {
+    // non-fatal
+  }
+
   for (let cycle = 1; cycle <= maxCycles; cycle += 1) {
     console.log(`[review] Cycle ${cycle}/${maxCycles}: capturing screenshots...`);
 
@@ -222,19 +389,14 @@ const runVisualReview = async (
 
     // 3. Build the review instruction with embedded images
     const pageList = screenshots.map((s) => s.page).join(', ');
-    const reviewInstruction = `Use the site-reviewer skill to review and fix this WordPress site.
-
-You are looking at screenshots of these pages: ${pageList}.
-Review cycle: ${cycle}/${maxCycles}.
-
-Original prompt: "${originalPrompt}"
-SiteSpec: ${JSON.stringify(siteSpec)}
-
-Look at each screenshot carefully. Identify issues (invisible text, empty pages, broken layout, missing navigation, poor colors, missing content sections, default WordPress content, etc.).
-
-Then FIX the issues you find using the wp_cli and file tools. Make targeted, surgical fixes — do not regenerate entire pages unless absolutely necessary.
-
-After fixing, return a summary of what you found and fixed.`;
+    const reviewInstruction = await loadPrompt('review', {
+      pageList,
+      cycle: String(cycle),
+      maxCycles: String(maxCycles),
+      originalPrompt,
+      siteSpec: JSON.stringify(siteSpec),
+      contentState,
+    });
 
     // 4. Create a runtime and inject screenshots as image content parts
     const runtime = createAgentRuntime(runtimeOptions);
@@ -318,37 +480,18 @@ const generateBuildSummary = async (
       ? `\nReview details: ${JSON.stringify(reviewStep.details)}`
       : '';
 
-    const instruction = `Generate a polished human-readable markdown summary of this WordPress site build.
-
-The summary should follow this format:
-# <Site Name>
-
-## Summary
-<1-2 sentence description of the site>
-
-## Pages Created
-<bullet list of pages with brief descriptions>
-
-## Design
-<1-2 sentences about the visual design, colors, fonts>
-
-## Technical Details
-- WordPress version: ${report.metadata.wpVersion}
-- Theme: ${report.metadata.themeGenerated}
-- Plugins: ${report.metadata.pluginsInstalled.join(', ') || 'None'}
-- Build duration: ${Math.round(report.metadata.duration / 1000)}s
-- Status: ${report.status}
-
-## Review Notes
-<bullet list of issues found and fixed during visual review, or "No issues found" if clean>
-
-Original user prompt: "${originalPrompt}"
-SiteSpec: ${JSON.stringify(siteSpec)}
-Build steps: ${JSON.stringify(report.steps.map((s) => ({ id: s.id, status: s.status })))}
-${reviewNotes}
-${report.errors?.length ? `Errors: ${JSON.stringify(report.errors)}` : ''}
-
-Return ONLY the markdown summary, no code fences, no preamble.`;
+    const instruction = await loadPrompt('summary', {
+      wpVersion: report.metadata.wpVersion,
+      themeGenerated: report.metadata.themeGenerated,
+      pluginsInstalled: report.metadata.pluginsInstalled.join(', ') || 'None',
+      buildDuration: String(Math.round(report.metadata.duration / 1000)),
+      status: report.status,
+      originalPrompt,
+      siteSpec: JSON.stringify(siteSpec),
+      buildSteps: JSON.stringify(report.steps.map((s) => ({ id: s.id, status: s.status }))),
+      reviewNotes,
+      errors: report.errors?.length ? `Errors: ${JSON.stringify(report.errors)}` : '',
+    });
 
     const ctx = await runtime.run(instruction);
     const text = getAssistantText(ctx);
@@ -372,17 +515,7 @@ const extractSiteSpecFromPrompt = async (
   const yoloHint = yolo
     ? '\nIMPORTANT: --yolo mode is enabled. You MUST use themeMode "blank" — no parent themes allowed.'
     : '';
-  const instruction = `Use the site-spec-extractor skill to extract a SiteSpec for this prompt.
-Return ONLY valid JSON for the SiteSpec extraction result:
-{
-  "siteSpec": { ... },
-  "warnings": [],
-  "inferredDefaults": [],
-  "confidence": 0.0,
-  "ambiguities": []
-}
-${yoloHint}
-Prompt: "${prompt}"`;
+  const instruction = await loadPrompt('extract', { yoloHint, prompt });
 
   const ctx = await runtime.run(instruction);
   const text = getAssistantText(ctx);
@@ -674,16 +807,20 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
 
     await runAgentStep(
       'install',
-      `Use the wp-install skill to install WordPress for siteId "${siteSpec.siteId}" at ${baseUrl}.
-Use admin email from SiteSpec if available and set timezone and language defaults.
-SiteSpec: ${JSON.stringify(siteSpec)}`,
+      await loadPrompt('install', {
+        siteId: siteSpec.siteId,
+        baseUrl,
+        siteSpec: JSON.stringify(siteSpec),
+      }),
     );
 
     if (siteSpec.plugins?.length) {
       await runAgentStep(
         'plugins',
-        `Use the plugin-installer skill to install and activate plugins: ${siteSpec.plugins.join(', ')}.
-SiteSpec: ${JSON.stringify(siteSpec)}`,
+        await loadPrompt('plugins', {
+          plugins: siteSpec.plugins.join(', '),
+          siteSpec: JSON.stringify(siteSpec),
+        }),
       );
     } else {
       markStep(steps, 'plugins', 'success', { skipped: true });
@@ -691,27 +828,88 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
 
     await runAgentStep(
       'theme',
-      `Use the theme-generator skill with themeMode "${siteSpec.themeMode}" and styleSeed "${siteSpec.styleSeed ?? ''}".
-SiteSpec: ${JSON.stringify(siteSpec)}`,
+      await loadPrompt('theme', {
+        themeMode: siteSpec.themeMode,
+        styleSeed: siteSpec.styleSeed ?? '',
+        siteSpec: JSON.stringify(siteSpec),
+      }),
     );
 
     if (siteSpec.pages?.length) {
       const originalPrompt = input.prompt ?? '';
+      const originalPromptHint = originalPrompt
+        ? `\nOriginal user prompt for tone and context: "${originalPrompt}"`
+        : '';
+      const blogHint =
+        originalPrompt && /blog|news|article|journal|post/i.test(originalPrompt)
+          ? '\nThe user wants a blog — create sample blog posts and set the blog page as the posts page.'
+          : '';
       await runAgentStep(
         'content',
-        `Use the page-builder skill to create pages from the SiteSpec.
-
-IMPORTANT — Generate rich, visually impressive block content for EVERY page. Requirements:
-- Each page MUST have a hero/header section with a background color from the theme palette (NEVER plain white or transparent)
-- Each page MUST have at least 2-3 content sections with real, contextual text (not lorem ipsum)
-- Use WordPress blocks: cover, group, columns, buttons, spacers, headings, paragraphs
-- Use theme palette color references ("backgroundColor":"primary", "textColor":"contrast") — not hardcoded hex values
-- Delete any remaining default WordPress content (Sample Page ID 2, Hello World post ID 1, default comment ID 1)
-- Create a navigation menu with all pages in logical order (Home first, Contact last) and assign to the primary location
-- Set the homepage as the static front page${originalPrompt ? `\n\nOriginal user prompt for content tone and context: "${originalPrompt}"` : ''}
-${originalPrompt && /blog|news|article|journal|post/i.test(originalPrompt) ? '\nThe user wants a blog — create 3-5 sample blog posts with relevant categories, real content (2-3 paragraphs each), and excerpts. Set the blog page as the posts page.' : ''}
-SiteSpec: ${JSON.stringify(siteSpec)}`,
+        await loadPrompt('content', {
+          originalPromptHint,
+          blogHint,
+          siteSpec: JSON.stringify(siteSpec),
+        }),
       );
+
+      // Verify content was actually created correctly, repair if not
+      console.log('[build] Verifying content creation...');
+      const { issues: contentIssues, details: contentDetails } = await verifyContent(
+        input.siteId,
+        siteSpec,
+      );
+
+      if (contentIssues.length > 0) {
+        console.log(`[build] Content verification found ${contentIssues.length} issue(s):`);
+        for (const issue of contentIssues) {
+          console.log(`[build]   - ${issue}`);
+        }
+
+        // Run a targeted repair pass
+        console.log('[build] Running content repair...');
+        try {
+          await repairContent(runtimeOptions, siteSpec, originalPrompt, contentIssues);
+
+          // Verify again after repair
+          const { issues: remainingIssues, details: repairDetails } = await verifyContent(
+            input.siteId,
+            siteSpec,
+          );
+          if (remainingIssues.length > 0) {
+            console.log(
+              `[build] Content repair incomplete — ${remainingIssues.length} issue(s) remain:`,
+            );
+            for (const issue of remainingIssues) {
+              console.log(`[build]   - ${issue}`);
+            }
+            updateStep(steps, 'content', {
+              details: {
+                ...contentDetails,
+                repairAttempted: true,
+                remainingIssues,
+                repairDetails,
+              },
+            });
+          } else {
+            console.log('[build] Content repair successful — all issues resolved');
+            updateStep(steps, 'content', {
+              details: { ...contentDetails, repairAttempted: true, repairSuccess: true },
+            });
+          }
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          console.log(`[build] Content repair failed: ${msg}`);
+          errors.push({
+            message: `Content repair: ${msg}`,
+            timestamp: new Date().toISOString(),
+            code: 'content_repair_error',
+          });
+        }
+      } else {
+        console.log('[build] Content verification passed — all pages created correctly');
+        updateStep(steps, 'content', { details: contentDetails });
+      }
     } else {
       markStep(steps, 'content', 'success', { skipped: true });
     }
@@ -756,8 +954,10 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
       for (let cycle = 1; cycle <= maxHealCycles; cycle += 1) {
         const startedAt = new Date().toISOString();
         await runtime.run(
-          `Use the self-healing skill to resolve validation failures. Cycle ${cycle}.
-SiteSpec: ${JSON.stringify(siteSpec)}`,
+          await loadPrompt('heal', {
+            cycle: String(cycle),
+            siteSpec: JSON.stringify(siteSpec),
+          }),
         );
         const healingResult = await buildValidation(
           input.siteId,

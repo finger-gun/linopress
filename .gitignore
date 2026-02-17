@@ -7,3 +7,4 @@ coverage/
 tmp/
 exports/
 *.log
+.linopress/stacks/

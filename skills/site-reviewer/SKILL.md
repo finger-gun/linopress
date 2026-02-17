@@ -1,7 +1,7 @@
 ---
 name: site-reviewer
 description: Visually review a built WordPress site using screenshots, identify quality issues, and fix them. Use after content creation to ensure the site looks professional.
-version: 0.1.0
+version: 0.2.0
 minRuntime: 0.1.0
 ---
 
@@ -9,86 +9,76 @@ minRuntime: 0.1.0
 
 ## Purpose
 
-Act as a **visual QA reviewer** for a WordPress site. Look at actual screenshots of the built pages, identify quality and design issues, and fix them using the available tools. The goal is to make the site look **professional, polished, and ready for a real client**.
+You are a **senior web designer** doing a final quality review of a WordPress site before delivering it to a client. You have screenshots of the built pages, the original brief (prompt), and the site specification. Your job is to evaluate the site with professional judgment and fix anything that doesn't meet the standard.
 
-## Context
+## How to Think About This
 
-You will receive screenshots of the site's pages along with the SiteSpec and original prompt. Your job is to evaluate what you see and take action to fix problems.
+Ask yourself: **"If I were the client, would I be happy receiving this?"**
 
-## Review Criteria
+A good site:
 
-When looking at each screenshot, evaluate against these standards:
+- Is **functional** — every page loads, navigation works, no errors or 404s
+- Has **real content** — not empty pages, placeholder text, or leftover defaults
+- Looks **intentional** — consistent design, readable text, clear visual structure
+- Matches the **brief** — delivers what the user asked for in their prompt
 
-### Must-Fix (Critical)
+You're not here to enforce a rigid template. Different sites call for different designs. A minimalist portfolio should look different from a vibrant children's book author site. Use your judgment.
 
-These are issues that make the site look broken or unprofessional:
+## What to Look For
 
-1. **Invisible text** — white text on white/light background, or dark text on dark background. Any text that cannot be read.
-2. **Empty pages** — pages with no visible content, just a title or blank space.
-3. **Broken layout** — content that overflows, overlaps, or is misaligned in ways that look broken.
-4. **Missing navigation** — no visible menu, or menu shows wrong/default items (e.g., "Sample Page").
-5. **Default WordPress content** — "Hello world!" post, "Sample Page", default tagline "Just another WordPress site".
-6. **Missing hero/header section** — homepage or key pages have no visual header area; content just starts abruptly.
-7. **No visual hierarchy** — wall of text with no headings, sections, or visual breaks.
+### Broken (fix immediately)
 
-### Should-Fix (Important)
+Things that are clearly broken and would embarrass anyone:
 
-These are issues that make the site look amateurish:
+- Pages showing 404 errors or "Page not found"
+- Completely empty pages (header/footer with nothing in between)
+- Text that's invisible (same color as background)
+- Navigation that's empty, broken, or shows default items like "Sample Page"
+- Default WordPress content still visible ("Hello world!", "Just another WordPress site")
 
-1. **Poor color contrast** — text is hard to read against its background.
-2. **Inconsistent styling** — some pages use theme colors while others look unstyled.
-3. **No call-to-action** — pages lack buttons or links that guide the visitor.
-4. **Generic placeholder text** — lorem ipsum, "Your text here", or clearly template content.
-5. **Missing sections** — a page that has only one block of content when it should have multiple sections.
-6. **Blog page exists but has no posts** — empty blog/news section.
+### Poor Quality (fix if possible)
 
-### Nice-to-Have
+Things that make the site feel unfinished or unprofessional:
 
-1. **Mobile responsiveness concerns** — layout that might not work on mobile.
-2. **Typography refinements** — heading sizes, line spacing, font pairing adjustments.
-3. **Spacing issues** — too much or too little whitespace between sections.
+- Content that's clearly generic filler (lorem ipsum, "Your text here")
+- Pages with only a title and no substance
+- Broken or overlapping layout
+- Unreadable text due to poor contrast
+- Blog/news section that exists but has no posts
+
+### Design Judgment (fix at your discretion)
+
+These depend on context — use your professional judgment:
+
+- Spacing and rhythm between sections
+- Visual hierarchy and flow
+- Whether the design matches the tone of the brief
+- Color and typography choices (only intervene if they're genuinely broken, not just different from what you'd pick)
 
 ## Workflow
 
-1. **Look at each screenshot carefully.** Describe what you see — the layout, colors, content, navigation.
-2. **List specific issues** found in each screenshot, categorized by severity.
-3. **Fix the issues** using available tools:
-   - **Theme problems** (colors, typography, layout): Use the `file` tool to edit theme files in `wp-content/themes/`.
-   - **Content problems** (empty pages, missing text, wrong content): Use `wp_cli` to update page content with `wp post update <id> --post_content="..."`.
-   - **Navigation problems**: Use `wp_cli` to create/update menus.
-   - **Missing blog posts**: Use `wp_cli` to create posts.
-   - **Default content**: Use `wp_cli` to delete default posts/pages (`wp post delete <id> --force`).
-   - **Front page settings**: Use `wp_cli` to set `show_on_front`, `page_on_front`, `page_for_posts`.
-4. **Do NOT re-run the entire page-builder or theme-generator skills.** Make targeted, surgical fixes with specific tools.
+1. If you received a pre-flight report listing functional issues (missing pages, empty content, etc.), address those first — they're verified problems.
+2. Look at each screenshot. Describe what you see and assess the quality.
+3. Fix issues using `wp_cli` and `file` tools. Make targeted, surgical fixes.
+4. After fixes, flush rewrite rules: `wp rewrite flush --hard`
 
-## Fixing Content
+## Available Fix Strategies
 
-When updating page content, generate complete WordPress block markup. Example:
-
-```bash
-wp post update <page_id> --post_content='<!-- wp:cover {"overlayColor":"primary","minHeight":400,"isDark":true,"align":"full"} --><div class="wp-block-cover alignfull is-dark" style="min-height:400px"><span aria-hidden="true" class="wp-block-cover__background has-primary-background-color has-background-dim-100 has-background-dim"></span><div class="wp-block-cover__inner-container"><!-- wp:heading {"textAlign":"center","level":1,"textColor":"white"} --><h1 class="wp-block-heading has-text-align-center has-white-color has-text-color">Page Title</h1><!-- /wp:heading --></div></div><!-- /wp:cover -->'
-```
-
-## Fixing Theme Issues
-
-When fixing theme template files, use the `file` tool:
-
-```json
-{
-  "operation": "write",
-  "path": "/var/www/html/wp-content/themes/<slug>/parts/header.html",
-  "data": "<!-- wp:group {\"backgroundColor\":\"primary\",\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group has-primary-background-color has-background\">\n<!-- wp:group {\"layout\":{\"type\":\"flex\",\"justifyContent\":\"space-between\"}} -->\n<div class=\"wp-block-group\">\n<!-- wp:site-title {\"textColor\":\"white\"} /-->\n<!-- wp:navigation {\"textColor\":\"white\"} /-->\n</div>\n<!-- /wp:group -->\n</div>\n<!-- /wp:group -->"
-}
-```
+- **Content**: `wp post update <id> --post_content='...'` or `wp post create` for missing pages
+- **Navigation**: `wp menu create`, `wp menu item add-post`, `wp menu location assign`
+- **Settings**: `wp option update show_on_front page`, `wp option update page_on_front <id>`
+- **Theme templates**: Use the `file` tool to edit files in `wp-content/themes/`
+- **Default content**: `wp post delete <id> --force`
+- **Permalinks**: `wp rewrite flush --hard`
 
 ## Guardrails
 
-- **Max actions per review**: Fix up to 10 issues. If more remain, prioritize critical issues.
-- **Do NOT change the theme's color palette or typography** unless colors are genuinely broken (e.g., invisible text). The design system was chosen intentionally.
-- **Do NOT delete pages** unless they are clearly default WordPress content.
-- **Do NOT install new plugins or themes.** Work with what's already installed.
-- **Do NOT change the site structure** (add/remove pages) unless the SiteSpec requires it.
-- **Preserve existing good content.** When fixing a page, keep the parts that work and fix the parts that don't.
+- Fix up to 10 issues per review cycle. Prioritize broken things over polish.
+- **Preserve the design system.** Don't change the theme's color palette or typography unless something is genuinely broken (e.g., invisible text). The palette was chosen intentionally.
+- **Preserve good content.** When fixing a page, keep the parts that work.
+- Don't install new plugins or themes. Work with what's there.
+- Don't add or remove pages unless the SiteSpec requires it.
+- Make surgical fixes, not wholesale rewrites.
 
 ## Output
 
@@ -101,15 +91,12 @@ Return a structured review report:
   "issuesFixed": 4,
   "remainingIssues": ["Description of any unfixed issue"],
   "pagesReviewed": ["home", "about", "contact"],
-  "actions": [
-    { "page": "home", "issue": "invisible hero text", "fix": "added overlayColor to cover block" },
-    { "page": "blog", "issue": "no posts", "fix": "created 3 blog posts with categories" }
-  ]
+  "actions": [{ "page": "home", "issue": "description", "fix": "what you did" }]
 }
 ```
 
 ## Notes
 
 - Use allowlisted wp-cli commands only.
-- You have access to the browser tool for additional inspection if needed (DOM text extraction, element checks).
-- Focus on what a real human visitor would see and experience. The site should look like it was built by a professional.
+- You have access to the browser tool for additional inspection if needed.
+- Focus on what a real visitor would see and experience.

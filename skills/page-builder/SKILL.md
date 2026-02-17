@@ -21,20 +21,22 @@ Create **rich, visually impressive** pages, blog posts, and navigation menus usi
 - originalPrompt: the user's original site prompt (use for tone, audience, and content generation)
 - parallel (optional)
 
-## CRITICAL: Content Quality Requirements
+## Content Quality
 
-**Every page MUST have:**
+Every page should have **substantive content** that serves the site's purpose. Design each page to feel complete and intentional — the kind of page a real visitor would find useful.
 
-1. A **hero/header section** with a background color from the theme palette (NEVER plain white or transparent). Use a `wp:cover` or `wp:group` block with `backgroundColor` or `gradient` set.
-2. At least **2-3 content sections** with real, contextual placeholder text appropriate to the site's purpose. Write actual paragraphs, not lorem ipsum.
-3. Proper visual hierarchy using **headings (h2-h4), paragraphs, buttons, spacers, and columns**.
-4. Use of **theme palette colors** via preset references like `"backgroundColor":"primary"` or `"textColor":"contrast"`.
+Guidelines:
 
-**NEVER create an empty page.** If the SiteSpec `content` field is a template hint object (e.g. `{ "id": "gallery" }`), you must generate full block markup appropriate for that page type.
+- Write real, contextual content appropriate to the site. Avoid lorem ipsum or obvious placeholder text.
+- Use **theme palette colors** via preset references (`"backgroundColor":"primary"`, `"textColor":"contrast"`) so themes can be changed later.
+- Use WordPress block markup — headings, paragraphs, groups, columns, covers, buttons, spacers — whatever serves the page best.
+- **Never create an empty page.** If the SiteSpec `content` field is a template hint (e.g. `{ "id": "gallery" }`), generate appropriate block markup for that page type.
 
-## Content Templates
+The templates below are **starting points**, not mandatory structures. Adapt them to the site's tone, audience, and purpose.
 
-When `content` is a ContentTemplate object with an `id` field, generate rich block markup based on the template type:
+## Content Templates (Examples)
+
+When `content` is a ContentTemplate object with an `id` field, generate block markup appropriate for that page type. These examples show one way to structure each type — adapt freely:
 
 ### homepage
 
@@ -451,13 +453,35 @@ This prevents default content from polluting navigation and the site.
 3. **Validate block markup** by ensuring matching block open/close comments.
 4. **Create pages:**
    - `wp post create --post_type=page --post_title=... --post_name=... --post_content=... --post_status=publish --porcelain`
+   - **CRITICAL**: The `--post_content` flag MUST contain the full block markup. If you skip it or pass empty content, the page will be blank.
+   - After each `wp post create`, note the returned page ID — you'll need it for the menu and front page config.
 5. Support parent/child hierarchy by mapping parent slugs to IDs.
 6. **Create blog posts** (if requested) with categories, excerpts, and rich content.
 7. **Create navigation menu** with pages in logical order and assign to primary location.
 8. **Set front page** to the homepage and posts page to the blog page (if applicable).
-9. Optional SEO metadata (if plugin installed):
-   - Yoast: `_yoast_wpseo_metadesc`, `_yoast_wpseo_focuskw`
-   - Rank Math: `rank_math_description`, `rank_math_focus_keyword`
+9. **Flush rewrite rules** to ensure permalinks work for all new pages:
+   ```bash
+   wp rewrite flush --hard
+   ```
+10. **Verify your work** — after creating all content, spot-check that pages exist and the site is functional:
+
+    ```bash
+    wp post list --post_type=page --post_status=publish --fields=ID,post_title,post_name --format=json
+    wp option get show_on_front
+    wp menu list --format=json
+    ```
+
+11. Optional SEO metadata (if plugin installed):
+    - Yoast: `_yoast_wpseo_metadesc`, `_yoast_wpseo_focuskw`
+    - Rank Math: `rank_math_description`, `rank_math_focus_keyword`
+
+## Common Pitfalls
+
+1. **Creating pages without content**: Don't run `wp post create` without `--post_content=...` — this creates a blank page.
+2. **Forgetting front page config**: If the site has a homepage, set `wp option update show_on_front page` and `wp option update page_on_front <homepage_id>`.
+3. **Forgetting rewrite flush**: Run `wp rewrite flush --hard` after creating pages, otherwise new pages may 404.
+4. **Empty navigation**: The `wp:navigation` block auto-discovers pages, but explicit menu items are more reliable. Verify the menu has items after creating it.
+5. **Blog page not configured**: If a blog page exists, set `wp option update page_for_posts <blog_page_id>` so it actually displays posts.
 
 ## Output
 
