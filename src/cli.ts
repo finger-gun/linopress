@@ -14,13 +14,16 @@ type ParsedArgs = {
   buildTimeoutMs?: number;
   noBrowser?: boolean;
   noHeal?: boolean;
+  noReview?: boolean;
   yolo?: boolean;
   help?: boolean;
+  reviewCycles?: number;
+  healCycles?: number;
 };
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--yolo] [--timeout ms]\n`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--no-review] [--yolo] [--timeout ms] [--review-cycles N] [--heal-cycles N]\n`,
   );
 };
 
@@ -52,8 +55,27 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
       continue;
     }
 
+    if (value === '--no-review') {
+      parsed.noReview = true;
+      continue;
+    }
+
     if (value === '--yolo') {
       parsed.yolo = true;
+      continue;
+    }
+
+    if (value === '--review-cycles') {
+      const cyclesValue = rest[i + 1];
+      i += 1;
+      parsed.reviewCycles = cyclesValue ? Number(cyclesValue) : undefined;
+      continue;
+    }
+
+    if (value === '--heal-cycles') {
+      const cyclesValue = rest[i + 1];
+      i += 1;
+      parsed.healCycles = cyclesValue ? Number(cyclesValue) : undefined;
       continue;
     }
 
@@ -170,8 +192,11 @@ const main = async () => {
       baseUrl: parsed.baseUrl,
       enableBrowser: parsed.noBrowser ? false : (parsed.browser ?? false),
       enableHealing: parsed.noHeal ? false : true,
+      enableReview: parsed.noReview ? false : undefined,
       yolo: parsed.yolo,
       buildTimeoutMs: parsed.buildTimeoutMs,
+      reviewCycles: parsed.reviewCycles,
+      healingCycles: parsed.healCycles,
     });
 
     console.log(`\nBuild status: ${report.status}`);
@@ -194,6 +219,9 @@ const main = async () => {
       for (const err of report.errors) {
         console.log(`- ${err.message}`);
       }
+    }
+    if (report.summary) {
+      console.log('\n' + report.summary);
     }
     return;
   }

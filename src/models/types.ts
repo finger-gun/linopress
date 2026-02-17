@@ -92,6 +92,7 @@ export interface BuildReport {
   exportBundle?: string;
   errors?: ErrorLog[];
   healingCycles?: HealingCycle[];
+  summary?: string;
   metadata: {
     startTime: string;
     endTime: string;

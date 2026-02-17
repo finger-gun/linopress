@@ -100,6 +100,7 @@ export const buildReportSchema = z.object({
   exportBundle: z.string().min(1).optional(),
   errors: z.array(errorLogSchema).optional(),
   healingCycles: z.array(healingCycleSchema).optional(),
+  summary: z.string().optional(),
   metadata: z.object({
     startTime: z.string().min(1),
     endTime: z.string().min(1),

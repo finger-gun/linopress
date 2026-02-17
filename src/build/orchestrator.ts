@@ -21,12 +21,19 @@ export type BuildOrchestratorInput = {
   baseUrl?: string;
   enableBrowser?: boolean;
   enableHealing?: boolean;
+  enableReview?: boolean;
   buildTimeoutMs?: number;
   skillTimeoutMs?: number;
   yolo?: boolean;
   modelProvider?: LlmProvider;
   model?: string;
   skillsDir?: string;
+  /** Max visual review cycles (default 2) */
+  reviewCycles?: number;
+  /** Max self-healing cycles (default 2) */
+  healingCycles?: number;
+  /** Max pages to screenshot for visual review (default 5) */
+  maxReviewPages?: number;
 };
 
 type ValidationResult = BuildReport['validation'];
@@ -45,9 +52,11 @@ const createSteps = (includeExtract: boolean): BuildStep[] => {
     { id: 'plugins', label: 'Install plugins', status: 'pending' },
     { id: 'theme', label: 'Generate theme', status: 'pending' },
     { id: 'content', label: 'Create content', status: 'pending' },
+    { id: 'review', label: 'Visual review', status: 'pending' },
     { id: 'validate', label: 'Validate site', status: 'pending' },
     { id: 'heal', label: 'Self-heal (if needed)', status: 'pending' },
     { id: 'export', label: 'Export bundle', status: 'pending' },
+    { id: 'summary', label: 'Generate summary', status: 'pending' },
   );
   return steps;
 };
@@ -106,6 +115,250 @@ const getAssistantText = (ctx: any) => {
     return typeof text === 'string' ? text.trim() : '';
   }
   return '';
+};
+
+// Capture full-page screenshots of the site's pages using the browser tool.
+const capturePageScreenshots = async (
+  siteId: string,
+  baseUrl: string,
+  pages?: SiteSpec['pages'],
+  maxPages = 5,
+) => {
+  const browser = createBrowserExecutor({ siteId });
+  const sessionId = `review-${siteId}`;
+  const screenshotPaths: Array<{ page: string; path: string }> = [];
+
+  await browser({ operation: 'session_start', siteId, sessionId });
+  try {
+    const urls = pages?.length
+      ? [
+          { slug: 'home', url: baseUrl },
+          ...pages
+            .filter((p) => p.slug !== 'home' && p.slug !== '/')
+            .slice(0, maxPages - 1)
+            .map((p) => ({ slug: p.slug, url: `${baseUrl.replace(/\/$/, '')}/${p.slug}` })),
+        ]
+      : [{ slug: 'home', url: baseUrl }];
+
+    for (const { slug, url } of urls) {
+      try {
+        await browser({
+          operation: 'navigate',
+          sessionId,
+          url,
+          waitUntil: 'networkidle',
+        });
+        const outputPath = `/tmp/${siteId}_review_${slug}_${Date.now()}.png`;
+        const result = await browser({
+          operation: 'screenshot',
+          sessionId,
+          url,
+          fullPage: true,
+          outputPath,
+        });
+        if ('path' in result && result.path) {
+          screenshotPaths.push({ page: slug, path: result.path });
+        }
+      } catch (error) {
+        console.log(
+          `[review] Failed to screenshot ${slug}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+  } finally {
+    await browser({ operation: 'session_end', sessionId });
+  }
+  return screenshotPaths;
+};
+
+// Encode screenshot files as base64 data URIs for the LLM.
+const screenshotsToBase64 = async (screenshotPaths: Array<{ page: string; path: string }>) => {
+  const results: Array<{ page: string; dataUri: string }> = [];
+  for (const { page, path: filePath } of screenshotPaths) {
+    try {
+      const buffer = await fs.readFile(filePath);
+      const base64 = buffer.toString('base64');
+      results.push({ page, dataUri: `data:image/png;base64,${base64}` });
+    } catch (error) {
+      console.log(
+        `[review] Failed to read screenshot ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  return results;
+};
+
+// Run a visual review cycle: screenshot pages, send to LLM for review, let it fix issues.
+const runVisualReview = async (
+  runtimeOptions: AgentRuntimeOptions,
+  siteId: string,
+  baseUrl: string,
+  siteSpec: SiteSpec,
+  originalPrompt: string,
+  steps: BuildStep[],
+  errors: ErrorLog[],
+  maxCycles = 2,
+  maxPages = 5,
+) => {
+  markStep(steps, 'review', 'in_progress');
+  const reviewDetails: Array<{ cycle: number; issuesFound: number; issuesFixed: number }> = [];
+
+  for (let cycle = 1; cycle <= maxCycles; cycle += 1) {
+    console.log(`[review] Cycle ${cycle}/${maxCycles}: capturing screenshots...`);
+
+    // 1. Capture screenshots
+    const screenshotPaths = await capturePageScreenshots(siteId, baseUrl, siteSpec.pages, maxPages);
+    if (screenshotPaths.length === 0) {
+      console.log('[review] No screenshots captured, skipping visual review');
+      break;
+    }
+
+    // 2. Encode as base64
+    const screenshots = await screenshotsToBase64(screenshotPaths);
+    if (screenshots.length === 0) {
+      console.log('[review] Failed to encode screenshots, skipping visual review');
+      break;
+    }
+
+    // 3. Build the review instruction with embedded images
+    const pageList = screenshots.map((s) => s.page).join(', ');
+    const reviewInstruction = `Use the site-reviewer skill to review and fix this WordPress site.
+
+You are looking at screenshots of these pages: ${pageList}.
+Review cycle: ${cycle}/${maxCycles}.
+
+Original prompt: "${originalPrompt}"
+SiteSpec: ${JSON.stringify(siteSpec)}
+
+Look at each screenshot carefully. Identify issues (invisible text, empty pages, broken layout, missing navigation, poor colors, missing content sections, default WordPress content, etc.).
+
+Then FIX the issues you find using the wp_cli and file tools. Make targeted, surgical fixes — do not regenerate entire pages unless absolutely necessary.
+
+After fixing, return a summary of what you found and fixed.`;
+
+    // 4. Create a runtime and inject screenshots as image content parts
+    const runtime = createAgentRuntime(runtimeOptions);
+    const imageContentParts: unknown[] = [
+      { type: 'text', text: reviewInstruction },
+      ...screenshots.map((s) => ({
+        type: 'image_url',
+        image_url: { url: s.dataUri, detail: 'high' },
+      })),
+    ];
+
+    try {
+      console.log(
+        `[review] Cycle ${cycle}: sending ${screenshots.length} screenshots to LLM for visual review...`,
+      );
+      const ctx = runtime.createContext(reviewInstruction);
+      // Override the user message content with multimodal parts (text + images).
+      // The OpenAI adapter supports this via buildContentParts() even though
+      // the sisu core types define content as string.
+      const userMsg = (ctx as any).messages?.find?.((m: any) => m.role === 'user');
+      if (userMsg) {
+        (userMsg as any).content = imageContentParts;
+      }
+      await runtime.agent.handler()(ctx);
+
+      // 5. Parse the review result from the assistant response
+      const responseText = getAssistantText(ctx);
+      let issuesFound = 0;
+      let issuesFixed = 0;
+      try {
+        const jsonMatch = responseText.match(/\{[\s\S]*"issuesFound"[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          issuesFound = parsed.issuesFound ?? 0;
+          issuesFixed = parsed.issuesFixed ?? 0;
+        }
+      } catch {
+        // couldn't parse structured output, that's ok
+      }
+
+      reviewDetails.push({ cycle, issuesFound, issuesFixed });
+      console.log(`[review] Cycle ${cycle}: found ${issuesFound} issues, fixed ${issuesFixed}`);
+
+      // If no issues found, we're done
+      if (issuesFound === 0) {
+        console.log('[review] Site looks good, no issues found');
+        break;
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.log(`[review] Cycle ${cycle} failed: ${msg}`);
+      errors.push({
+        message: `Review cycle ${cycle}: ${msg}`,
+        timestamp: new Date().toISOString(),
+        code: 'review_cycle_error',
+      });
+      // Don't fail the whole build for a review error — continue to validation
+      break;
+    }
+  }
+
+  markStep(steps, 'review', 'success', {
+    cycles: reviewDetails,
+    totalIssuesFound: reviewDetails.reduce((sum, d) => sum + d.issuesFound, 0),
+    totalIssuesFixed: reviewDetails.reduce((sum, d) => sum + d.issuesFixed, 0),
+  });
+};
+
+// Generate a human-readable markdown summary of the build.
+const generateBuildSummary = async (
+  runtimeOptions: AgentRuntimeOptions,
+  siteSpec: SiteSpec,
+  originalPrompt: string,
+  report: BuildReport,
+): Promise<string | undefined> => {
+  try {
+    const runtime = createAgentRuntime(runtimeOptions);
+
+    const reviewStep = report.steps.find((s) => s.id === 'review');
+    const reviewNotes = reviewStep?.details
+      ? `\nReview details: ${JSON.stringify(reviewStep.details)}`
+      : '';
+
+    const instruction = `Generate a polished human-readable markdown summary of this WordPress site build.
+
+The summary should follow this format:
+# <Site Name>
+
+## Summary
+<1-2 sentence description of the site>
+
+## Pages Created
+<bullet list of pages with brief descriptions>
+
+## Design
+<1-2 sentences about the visual design, colors, fonts>
+
+## Technical Details
+- WordPress version: ${report.metadata.wpVersion}
+- Theme: ${report.metadata.themeGenerated}
+- Plugins: ${report.metadata.pluginsInstalled.join(', ') || 'None'}
+- Build duration: ${Math.round(report.metadata.duration / 1000)}s
+- Status: ${report.status}
+
+## Review Notes
+<bullet list of issues found and fixed during visual review, or "No issues found" if clean>
+
+Original user prompt: "${originalPrompt}"
+SiteSpec: ${JSON.stringify(siteSpec)}
+Build steps: ${JSON.stringify(report.steps.map((s) => ({ id: s.id, status: s.status })))}
+${reviewNotes}
+${report.errors?.length ? `Errors: ${JSON.stringify(report.errors)}` : ''}
+
+Return ONLY the markdown summary, no code fences, no preamble.`;
+
+    const ctx = await runtime.run(instruction);
+    const text = getAssistantText(ctx);
+    return text || undefined;
+  } catch (error) {
+    console.log(
+      `[summary] Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return undefined;
+  }
 };
 
 // Uses the LLM skill to return a validated SiteSpec extraction JSON.
@@ -463,6 +716,24 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
       markStep(steps, 'content', 'success', { skipped: true });
     }
 
+    // Visual review: screenshot pages, send to LLM, fix quality issues
+    const reviewEnabled = input.enableReview ?? input.enableBrowser ?? false;
+    if (reviewEnabled) {
+      await runVisualReview(
+        runtimeOptions,
+        input.siteId,
+        baseUrl,
+        siteSpec,
+        input.prompt ?? siteSpec.prompt ?? '',
+        steps,
+        errors,
+        input.reviewCycles ?? 2,
+        input.maxReviewPages ?? 5,
+      );
+    } else {
+      markStep(steps, 'review', 'success', { skipped: true, reason: 'review not enabled' });
+    }
+
     markStep(steps, 'validate', 'in_progress');
     let { validation, screenshots } = await buildValidation(
       input.siteId,
@@ -481,7 +752,8 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
 
     if (!validationOk && input.enableHealing) {
       markStep(steps, 'heal', 'in_progress');
-      for (let cycle = 1; cycle <= 2; cycle += 1) {
+      const maxHealCycles = input.healingCycles ?? 2;
+      for (let cycle = 1; cycle <= maxHealCycles; cycle += 1) {
         const startedAt = new Date().toISOString();
         await runtime.run(
           `Use the self-healing skill to resolve validation failures. Cycle ${cycle}.
@@ -506,7 +778,7 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
           startedAt,
           finishedAt: new Date().toISOString(),
           actions: [{ action: 'self-heal', detail: okNow ? 'resolved' : 'retry' }],
-          result: okNow ? 'success' : cycle === 2 ? 'failed' : 'partial',
+          result: okNow ? 'success' : cycle === maxHealCycles ? 'failed' : 'partial',
         });
 
         if (okNow) break;
@@ -574,6 +846,22 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
     if (input.enableHealing && report.errors && report.errors.length) {
       report.healingCycles = healingCycles.length ? healingCycles : undefined;
     }
+
+    // Generate a human-readable build summary as the final step
+    markStep(steps, 'summary', 'in_progress');
+    const summary = await generateBuildSummary(
+      runtimeOptions,
+      siteSpec,
+      input.prompt ?? siteSpec.prompt ?? '',
+      report,
+    );
+    if (summary) {
+      report.summary = summary;
+      markStep(steps, 'summary', 'success');
+    } else {
+      markStep(steps, 'summary', 'success', { skipped: true, reason: 'summary generation failed' });
+    }
+
     return report;
   } catch (error) {
     const endedAt = new Date().toISOString();
