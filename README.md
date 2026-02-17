@@ -1,5 +1,7 @@
 # Linopress
 
+![LinoPress](./assets/linopress-logo.png)
+
 Linopress is an **agentic automation layer for WordPress**: describe a site in natural language, and the system plans, builds, validates, repairs, and exports it through deterministic tooling.
 
 It is designed for builders who want reproducible outcomes—not one-off manual clicks.
