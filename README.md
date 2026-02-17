@@ -128,6 +128,22 @@ See `docs/developer-guide.md` for stack layout, workflows, and troubleshooting.
 
 Agent context: `AGENT.md`.
 
+## Marketing landing page (temporary)
+
+Landing page files live in:
+
+- `landingpage/index.html`
+- `landingpage/styles.css`
+- `landingpage/assets/linopress-logo.png`
+
+Local preview:
+
+```bash
+python3 -m http.server 4173 --directory landingpage
+```
+
+Then open `http://127.0.0.1:4173` in your browser.
+
 ## Repository layout
 
 ```text
