@@ -73,6 +73,22 @@ const markStep = (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Poll until the database is accepting connections and WP can talk to it.
+const waitForDatabase = async (siteId: string, maxWaitMs = 60_000) => {
+  const start = Date.now();
+  const interval = 2_000;
+  while (Date.now() - start < maxWaitMs) {
+    try {
+      const result = await runWpCli(siteId, 'wp db check', ['--skip-plugins', '--skip-themes']);
+      if (result.exitCode === 0) return;
+    } catch {
+      // ignore — container may not be ready yet
+    }
+    await sleep(interval);
+  }
+  throw new Error(`Database for ${siteId} did not become ready within ${maxWaitMs}ms`);
+};
+
 const readSpecFromFile = async (specPath: string) => {
   const resolved = path.resolve(specPath);
   const raw = await fs.readFile(resolved, 'utf8');
@@ -367,10 +383,24 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
     });
     markStep(steps, 'provision', 'success');
 
+    console.log('[build] Waiting for database readiness...');
+    await waitForDatabase(input.siteId);
+    console.log('[build] Database ready');
+
     const runAgentStep = async (id: string, instruction: string) => {
       markStep(steps, id, 'in_progress');
-      await runtime.run(instruction);
-      markStep(steps, id, 'success');
+      try {
+        await runtime.run(instruction);
+        markStep(steps, id, 'success');
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        errors.push({
+          message: `Step ${id}: ${msg}`,
+          timestamp: new Date().toISOString(),
+          code: `step_${id}_error`,
+        });
+        markStep(steps, id, 'failed', { error: msg });
+      }
     };
 
     await runAgentStep(

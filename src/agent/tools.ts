@@ -22,6 +22,20 @@ export type ToolsetOptions = {
 const filterTools = (tools: Tool[], allowlist: ToolName[]) =>
   tools.filter((tool) => allowlist.includes(tool.name as ToolName));
 
+// Wrap tool handlers to catch errors and return them as structured results
+// instead of throwing, so the iterative tool calling loop can continue.
+const safeTool = (tool: Tool): Tool => ({
+  ...tool,
+  handler: async (input, ctx) => {
+    try {
+      return await tool.handler(input, ctx);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { status: 'error', error: message };
+    }
+  },
+});
+
 export const createToolset = ({
   siteId,
   timeoutMs,
@@ -50,6 +64,6 @@ export const createToolset = ({
   );
   const exportTool = createExportTool(createExportExecutor());
 
-  const tools = [wpCli, file, browser, exportTool];
+  const tools = [wpCli, file, browser, exportTool].map(safeTool);
   return filterTools(tools, allowlist ?? [...DEFAULT_TOOL_ALLOWLIST]);
 };

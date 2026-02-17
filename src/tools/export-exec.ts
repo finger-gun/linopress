@@ -61,6 +61,8 @@ const runCommandToFile = (command: string, args: string[], filePath: string, tim
 const archiveWpContent = async (siteId: string, outputPath: string) => {
   const args = [
     'exec',
+    '-u',
+    'www-data',
     resolveContainerName(siteId),
     'tar',
     '-czf',
@@ -79,6 +81,8 @@ const archiveWpContent = async (siteId: string, outputPath: string) => {
 const exportDatabase = async (siteId: string, outputPath: string) => {
   const args = [
     'exec',
+    '-u',
+    'www-data',
     resolveContainerName(siteId),
     'wp',
     'db',
@@ -100,7 +104,15 @@ const getWordPressVersion = async (siteId: string) => {
 };
 
 const getPhpVersion = async (siteId: string) => {
-  const args = ['exec', resolveContainerName(siteId), 'php', '-r', 'echo PHP_VERSION;'];
+  const args = [
+    'exec',
+    '-u',
+    'www-data',
+    resolveContainerName(siteId),
+    'php',
+    '-r',
+    'echo PHP_VERSION;',
+  ];
   const result = await runCommand('docker', args, DEFAULT_TIMEOUT_MS);
   return result.stdout.trim();
 };
@@ -177,7 +189,7 @@ const validateBundleContents = async (bundlePath: string) => {
     throw new Error(result.stderr || 'Failed to validate bundle archive');
   }
 
-  const contents = result.stdout.split('\n');
+  const contents = result.stdout.split('\n').map((e) => e.replace(/^\.\//, ''));
   const hasWpContent = contents.some((entry) => entry.startsWith('wp-content/'));
   const hasDatabase = contents.some((entry) => entry === 'database.sql');
   const hasManifest = contents.some((entry) => entry === 'manifest.json');

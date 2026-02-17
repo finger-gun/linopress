@@ -121,10 +121,50 @@ const parseJsonOutput = (result: WpCliResult, args?: string[]) => {
   }
 };
 
+// Strip wrapping quotes that LLMs sometimes add around arg values.
+// e.g. '--title="Solstice Yoga Studio"' -> '--title=Solstice Yoga Studio'
+// Also recombines split quoted args: ["--title=\"Solstice", "Yoga", "Studio\""] -> ["--title=Solstice Yoga Studio"]
+const recombineQuotedArgs = (args: string[]): string[] => {
+  const result: string[] = [];
+  let accumulator: string[] | null = null;
+
+  for (const arg of args) {
+    if (accumulator) {
+      accumulator.push(arg);
+      if (arg.endsWith('"') || arg.endsWith("'")) {
+        const joined = accumulator.join(' ');
+        result.push(joined.replace(/^(--?\w+=)?["'](.*)["']$/, '$1$2'));
+        accumulator = null;
+      }
+      continue;
+    }
+
+    // Check for start of a split quoted value: --title="Solstice (no closing quote)
+    const match = arg.match(/^(--?\w+=)["'](.*)$/);
+    if (match && !arg.endsWith('"') && !arg.endsWith("'")) {
+      accumulator = [arg];
+      continue;
+    }
+
+    // Strip wrapping quotes from self-contained args: --title="value"
+    result.push(arg.replace(/^(--?\w+=)["'](.*)["']$/, '$1$2'));
+  }
+
+  // If we have an unclosed accumulator, push what we have
+  if (accumulator) {
+    const joined = accumulator.join(' ');
+    result.push(joined.replace(/^(--?\w+=)?["'](.*)["']?$/, '$1$2'));
+  }
+
+  return result;
+};
+
 const sanitizeArgs = (args?: string[]) => {
   if (!args || args.length === 0) return [];
 
-  return args.map((arg) => {
+  const combined = recombineQuotedArgs(args);
+
+  return combined.map((arg) => {
     if (arg.includes('\u0000') || arg.includes('\n') || arg.includes('\r')) {
       throw new Error('wp-cli arguments must not include control characters.');
     }
