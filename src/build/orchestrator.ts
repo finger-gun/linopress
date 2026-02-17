@@ -717,7 +717,7 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
     }
 
     // Visual review: screenshot pages, send to LLM, fix quality issues
-    const reviewEnabled = input.enableReview ?? input.enableBrowser ?? false;
+    const reviewEnabled = input.enableReview ?? false;
     if (reviewEnabled) {
       await runVisualReview(
         runtimeOptions,

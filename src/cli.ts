@@ -14,7 +14,7 @@ type ParsedArgs = {
   buildTimeoutMs?: number;
   noBrowser?: boolean;
   noHeal?: boolean;
-  noReview?: boolean;
+  review?: boolean;
   yolo?: boolean;
   help?: boolean;
   reviewCycles?: number;
@@ -23,7 +23,7 @@ type ParsedArgs = {
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--no-review] [--yolo] [--timeout ms] [--review-cycles N] [--heal-cycles N]\n`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--review] [--yolo] [--timeout ms] [--review-cycles N] [--heal-cycles N]\n`,
   );
 };
 
@@ -55,8 +55,8 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
       continue;
     }
 
-    if (value === '--no-review') {
-      parsed.noReview = true;
+    if (value === '--review') {
+      parsed.review = true;
       continue;
     }
 
@@ -192,7 +192,7 @@ const main = async () => {
       baseUrl: parsed.baseUrl,
       enableBrowser: parsed.noBrowser ? false : (parsed.browser ?? false),
       enableHealing: parsed.noHeal ? false : true,
-      enableReview: parsed.noReview ? false : undefined,
+      enableReview: parsed.review ?? false,
       yolo: parsed.yolo,
       buildTimeoutMs: parsed.buildTimeoutMs,
       reviewCycles: parsed.reviewCycles,
