@@ -76,7 +76,10 @@
             </div>
             <div class="prompt-body">
               <div class="prompt-label">Site brief</div>
-              <div class="prompt-textarea" id="hero-prompt-example" aria-live="polite">Build a premium yoga studio site with classes, memberships, and instructor bios. Keep it fast, accessible, and conversion-focused.</div>
+              <div class="prompt-textarea" aria-live="polite">
+                <span class="prompt-text" id="hero-prompt-example-text">Build a premium yoga studio site with classes, memberships, and instructor bios. Keep it fast, accessible, and conversion-focused.</span>
+                <span class="prompt-swoosh" aria-hidden="true"></span>
+              </div>
 
               <p class="prompt-helper">
                 Deterministic flow: prompt → build → verify → self-heal (max 2 cycles) → export.
@@ -283,39 +286,72 @@
 
     <script>
       (() => {
-        const promptEl = document.getElementById('hero-prompt-example');
-        if (!promptEl) return;
+        const promptTextEl = document.getElementById('hero-prompt-example-text');
+        if (!promptTextEl) return;
+        const promptBoxEl = promptTextEl.closest('.prompt-textarea');
+        if (!promptBoxEl) return;
 
         // Curated prompt examples for the landing page hero.
         // Deterministic, ordered list with no external data dependency.
         const promptExamples = [
-          'Build a premium yoga studio site with classes, memberships, and instructor bios. Keep it fast, accessible, and conversion-focused.',
-          'Create a minimalist portfolio for a wedding photographer with galleries, pricing, testimonials, and inquiry forms.',
-          'Generate a modern local bakery website with seasonal menus, online pre-orders, and pickup information.',
-          'Design a consulting agency site with service pages, case studies, lead magnets, and calendly-style booking CTA.',
-          'Create a personal blog for a software engineer with article categories, newsletter signup, and a clean dark theme.',
-          'Build a nonprofit homepage with mission highlights, donation flow, volunteer signup, and upcoming events.'
+          {
+            text: 'Build a premium yoga studio site with classes, memberships, and instructor bios. Keep it fast, accessible, and conversion-focused.',
+            tone: 'aqua'
+          },
+          {
+            text: 'Create a minimalist portfolio for a wedding photographer with galleries, pricing, testimonials, and inquiry forms.',
+            tone: 'violet'
+          },
+          {
+            text: 'Generate a modern local bakery website with seasonal menus, online pre-orders, and pickup information.',
+            tone: 'amber'
+          },
+          {
+            text: 'Design a consulting agency site with service pages, case studies, lead magnets, and calendly-style booking CTA.',
+            tone: 'rose'
+          },
+          {
+            text: 'Create a personal blog for a software engineer with article categories, newsletter signup, and a clean dark theme.',
+            tone: 'mint'
+          },
+          {
+            text: 'Build a nonprofit homepage with mission highlights, donation flow, volunteer signup, and upcoming events.',
+            tone: 'sky'
+          }
         ];
 
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const rotationIntervalMs = 4200;
         let currentIndex = 0;
 
-        promptEl.textContent = promptExamples[currentIndex];
+        promptTextEl.textContent = promptExamples[currentIndex].text;
+        promptBoxEl.dataset.tone = promptExamples[currentIndex].tone;
 
         if (reduceMotion || promptExamples.length < 2) {
-          promptEl.classList.add('reduced-motion');
+          promptTextEl.classList.add('reduced-motion');
           return;
         }
 
+        let isAnimating = false;
+
         const rotatePrompt = () => {
-          promptEl.classList.add('is-transitioning');
+          if (isAnimating) return;
+          isAnimating = true;
+
+          promptTextEl.classList.add('is-transitioning');
+          promptBoxEl.classList.add('is-swooshing');
 
           window.setTimeout(() => {
             currentIndex = (currentIndex + 1) % promptExamples.length;
-            promptEl.textContent = promptExamples[currentIndex];
-            promptEl.classList.remove('is-transitioning');
-          }, 180);
+            promptTextEl.textContent = promptExamples[currentIndex].text;
+            promptBoxEl.dataset.tone = promptExamples[currentIndex].tone;
+            promptTextEl.classList.remove('is-transitioning');
+          }, 210);
+
+          window.setTimeout(() => {
+            promptBoxEl.classList.remove('is-swooshing');
+            isAnimating = false;
+          }, 620);
         };
 
         window.setInterval(rotatePrompt, rotationIntervalMs);
