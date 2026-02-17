@@ -157,7 +157,14 @@ const parseScreenshotPath = (stdout: string) => {
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
-  return lines[lines.length - 1] ?? '';
+  const lastLine = lines[lines.length - 1] ?? '';
+  // The agent-browser CLI outputs lines like "✓ Screenshot saved to /tmp/file.png"
+  // Extract the actual file path from such messages.
+  const pathMatch = lastLine.match(/(?:saved to\s+)(\S+)/i);
+  if (pathMatch) return pathMatch[1];
+  // If the line starts with / it's already a bare path
+  if (lastLine.startsWith('/')) return lastLine;
+  return lastLine;
 };
 
 const buildPerformanceScript = () =>
