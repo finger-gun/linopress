@@ -15,7 +15,7 @@ context: |
     - Portability: exports must include wp-content, DB dump, and manifest.json.
 
   Tech stack (v0.1):
-    - Agent runtime: Sisu (@sisu-ai/*), https://github.com/finger-gun/sisu
+    - Agent runtime: Sisu ((@sisu-ai/core,@sisu-ai/mw-conversation-buffer, @sisu-ai/mw-error-boundary, @sisu-ai/mw-register-tools, @sisu-ai/mw-skills, @sisu-ai/mw-tool-calling, @sisu-ai/mw-trace-viewer, @sisu-ai/*, etc), https://github.com/finger-gun/sisu
     - Browser automation: vercel-labs/agent-browser (CLI-based), https://github.com/vercel-labs/agent-browser
     - WordPress automation: wp-cli, https://github.com/wp-cli/wp-cli
     - Runtime isolation: Docker Compose, https://docs.docker.com/compose/

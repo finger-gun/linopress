@@ -39,7 +39,7 @@ Linopress requires a complete foundational architecture to fulfill its vision as
 
 **New Dependencies**:
 - Docker & Docker Compose for runtime isolation
-- Sisu framework (@sisu-ai/core, @sisu-ai/runtime) for agent execution
+- Sisu framework (@sisu-ai/core,@sisu-ai/mw-conversation-buffer, @sisu-ai/mw-error-boundary, @sisu-ai/mw-register-tools, @sisu-ai/mw-skills, @sisu-ai/mw-tool-calling, @sisu-ai/mw-trace-viewer, etc) for agent execution
 - vercel-labs/agent-browser for headless browser automation
 - wp-cli for WordPress automation
 - MariaDB for database layer

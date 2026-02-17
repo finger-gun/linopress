@@ -1,7 +1,7 @@
 ## 1. Project Initialization and Setup
 
 - [x] 1.1 Initialize Node.js project with TypeScript configuration
-- [x] 1.2 Install core dependencies: Sisu framework 
+- [x] 1.2 Install core dependencies: Sisu framework
 - [x] 1.3 Configure TypeScript compiler options and build scripts
 - [x] 1.4 Set up project directory structure (docker/, agent-api/, tools/, schemas/)
 - [x] 1.5 Create .gitignore and environment variable templates
@@ -16,72 +16,72 @@
 - [x] 2.5 Configure optional browser service (browserless/chrome)
 - [x] 2.6 Define Docker networking and port mappings
 - [x] 2.7 Create Dockerfile for custom agent-api image
-- [ ] 2.8 Implement site stack provisioning CLI command
-- [ ] 2.9 Implement site stack lifecycle management (start, stop, destroy)
-- [ ] 2.10 Add health checks for wordpress and db containers
-- [ ] 2.11 Configure resource limits (memory, CPU) for containers
-- [ ] 2.12 Test per-site isolation with multiple concurrent stacks
+- [x] 2.8 Implement site stack provisioning CLI command
+- [x] 2.9 Implement site stack lifecycle management (start, stop, destroy)
+- [x] 2.10 Add health checks for wordpress and db containers
+- [x] 2.11 Configure resource limits (memory, CPU) for containers
+- [x] 2.12 Test per-site isolation with multiple concurrent stacks
 
 ## 3. Data Models and TypeScript Interfaces
 
-- [ ] 3.1 Define SiteSpec interface with all required fields
-- [ ] 3.2 Define PageSpec interface for content specifications
-- [ ] 3.3 Define BuildReport interface with validation results
-- [ ] 3.4 Define ValidationResult interface for CLI and browser checks
-- [ ] 3.5 Define BuildStep, ErrorLog, and HealingCycle interfaces
-- [ ] 3.6 Create manifest.json schema definition
-- [ ] 3.7 Implement validation functions for data models using Zod or similar
+- [x] 3.1 Define SiteSpec interface with all required fields
+- [x] 3.2 Define PageSpec interface for content specifications
+- [x] 3.3 Define BuildReport interface with validation results
+- [x] 3.4 Define ValidationResult interface for CLI and browser checks
+- [x] 3.5 Define BuildStep, ErrorLog, and HealingCycle interfaces
+- [x] 3.6 Create manifest.json schema definition
+- [x] 3.7 Implement validation functions for data models using Zod or similar
 
 ## 4. WP-CLI Tool Implementation
 
-- [ ] 4.1 Create wp-cli tool wrapper with Sisu tool definition
-- [ ] 4.2 Define WP_CLI_ALLOWLIST constant with permitted commands
-- [ ] 4.3 Implement command validation against allowlist
-- [ ] 4.4 Implement parameter sanitization for injection prevention
-- [ ] 4.5 Implement docker exec wrapper for command execution in wordpress container
-- [ ] 4.6 Add stdout/stderr/exit code capture
-- [ ] 4.7 Implement JSON output parsing for structured commands
-- [ ] 4.8 Add command timeout enforcement
-- [ ] 4.9 Implement WordPress installation detection
-- [ ] 4.10 Add database connectivity validation before DB commands
-- [ ] 4.11 Create idempotent command wrappers for common operations
-- [ ] 4.12 Implement error code interpretation and mapping
-- [ ] 4.13 Add comprehensive logging for all wp-cli invocations
+- [x] 4.1 Create wp-cli tool wrapper with Sisu tool definition
+- [x] 4.2 Define WP_CLI_ALLOWLIST constant with permitted commands
+- [x] 4.3 Implement command validation against allowlist
+- [x] 4.4 Implement parameter sanitization for injection prevention
+- [x] 4.5 Implement docker exec wrapper for command execution in wordpress container
+- [x] 4.6 Add stdout/stderr/exit code capture
+- [x] 4.7 Implement JSON output parsing for structured commands
+- [x] 4.8 Add command timeout enforcement
+- [x] 4.9 Implement WordPress installation detection
+- [x] 4.10 Add database connectivity validation before DB commands
+- [x] 4.11 Create idempotent command wrappers for common operations
+- [x] 4.12 Implement error code interpretation and mapping
+- [x] 4.13 Add comprehensive logging for all wp-cli invocations
 
 ## 5. File Tool Implementation
 
-- [ ] 5.1 Create file tool wrapper with Sisu tool definition
-- [ ] 5.2 Define allowed paths: /var/www/html/wp-content/**, /tmp/linopress/**
-- [ ] 5.3 Implement path validation with traversal attack prevention
-- [ ] 5.4 Implement file read operations (text and binary)
-- [ ] 5.5 Implement file write operations with atomic writes
-- [ ] 5.6 Implement file copy operations
-- [ ] 5.7 Implement file delete operations (files and directories)
-- [ ] 5.8 Implement directory listing with recursive and filter options
-- [ ] 5.9 Implement file metadata operations (exists, size, mtime)
-- [ ] 5.10 Set correct file permissions (644 for files, 755 for directories)
-- [ ] 5.11 Implement temporary file management in /tmp/linopress
-- [ ] 5.12 Add UTF-8 encoding handling for text files
-- [ ] 5.13 Implement concurrent access safety mechanisms
+- [x] 5.1 Create file tool wrapper with Sisu tool definition
+- [x] 5.2 Define allowed paths: /var/www/html/wp-content/**, /tmp/linopress/**
+- [x] 5.3 Implement path validation with traversal attack prevention
+- [x] 5.4 Implement file read operations (text and binary)
+- [x] 5.5 Implement file write operations with atomic writes
+- [x] 5.6 Implement file copy operations
+- [x] 5.7 Implement file delete operations (files and directories)
+- [x] 5.8 Implement directory listing with recursive and filter options
+- [x] 5.9 Implement file metadata operations (exists, size, mtime)
+- [x] 5.10 Set correct file permissions (644 for files, 755 for directories)
+- [x] 5.11 Implement temporary file management in /tmp/linopress
+- [x] 5.12 Add UTF-8 encoding handling for text files
+- [x] 5.13 Implement concurrent access safety mechanisms
 
 ## 6. Browser Tool Implementation
 
-- [ ] 6.1 Create browser tool wrapper with Sisu tool definition
-- [ ] 6.2 Integrate vercel-labs/agent-browser CLI
-- [ ] 6.3 Define BROWSER_URL_ALLOWLIST for local WordPress URLs
-- [ ] 6.4 Implement URL validation before navigation
-- [ ] 6.5 Implement page navigation with DOMContentLoaded wait
-- [ ] 6.6 Implement screenshot capture (full-page and viewport)
-- [ ] 6.7 Implement console error detection and capture
-- [ ] 6.8 Implement page element inspection operations
-- [ ] 6.9 Add page load performance metrics collection
-- [ ] 6.10 Implement viewport configuration (desktop/mobile)
-- [ ] 6.11 Add network request monitoring for failed assets
-- [ ] 6.12 Implement JavaScript execution in page context
-- [ ] 6.13 Add browser container lifecycle management
-- [ ] 6.14 Implement Chrome DevTools Protocol connection
-- [ ] 6.15 Add navigation timeout enforcement
-- [ ] 6.16 Implement automatic error screenshot capture
+- [x] 6.1 Create browser tool wrapper with Sisu tool definition
+- [x] 6.2 Integrate vercel-labs/agent-browser CLI
+- [x] 6.3 Define BROWSER_URL_ALLOWLIST for local WordPress URLs
+- [x] 6.4 Implement URL validation before navigation
+- [x] 6.5 Implement page navigation with DOMContentLoaded wait
+- [x] 6.6 Implement screenshot capture (full-page and viewport)
+- [x] 6.7 Implement console error detection and capture
+- [x] 6.8 Implement page element inspection operations
+- [x] 6.9 Add page load performance metrics collection
+- [x] 6.10 Implement viewport configuration (desktop/mobile)
+- [x] 6.11 Add network request monitoring for failed assets
+- [x] 6.12 Implement JavaScript execution in page context
+- [x] 6.13 Add browser container lifecycle management
+- [x] 6.14 Implement Chrome DevTools Protocol connection
+- [x] 6.15 Add navigation timeout enforcement
+- [x] 6.16 Implement automatic error screenshot capture
 
 ## 7. Export Tool Implementation
 
@@ -90,7 +90,7 @@
 - [ ] 7.3 Implement database dump using wp-cli db export
 - [ ] 7.4 Implement manifest.json generation with BuildReport
 - [ ] 7.5 Create combined tar.gz bundle with all components
-- [ ] 7.6 Implement bundle naming convention (site-{siteId}_{timestamp}.tar.gz)
+- [ ] 7.6 Implement bundle naming convention (site-{siteId}\_{timestamp}.tar.gz)
 - [ ] 7.7 Add export bundle validation (contents, integrity, SQL syntax)
 - [ ] 7.8 Implement export to configured output directory
 - [ ] 7.9 Add secret scanning for API keys and passwords

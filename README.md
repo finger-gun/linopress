@@ -63,7 +63,46 @@ Planned capability areas in the foundation scope include:
 
 🚧 **Early foundation phase**
 
-The repository currently documents architecture, requirements, and implementation tasks for the first development cycle. Production-ready binaries, polished DX workflows, and full quick-start instructions are intentionally deferred while the fundraising-aligned foundation work is completed.
+Core scaffolding exists for local development. Expect breaking changes while the foundation work lands.
+
+## Quick Start (Local Dev)
+
+### Requirements
+
+- Node.js 20+
+- pnpm 9+
+- Docker Desktop (running)
+
+### Install and Build
+
+```bash
+pnpm install
+pnpm build
+```
+
+### Provision a Site Stack
+
+```bash
+node dist/cli.js provision yoga-studio --port 8080
+```
+
+### Start/Stop/Destroy
+
+```bash
+node dist/cli.js start yoga-studio
+node dist/cli.js stop yoga-studio
+node dist/cli.js destroy yoga-studio
+```
+
+### Optional Browser Container
+
+```bash
+node dist/cli.js provision yoga-studio --port 8080 --browser
+```
+
+## Developer Guide
+
+See `docs/developer-guide.md` for stack layout, workflows, and troubleshooting.
 
 ## Repository layout
 

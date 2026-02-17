@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.linopress
+.env
+exports
+tmp
+**/.DS_Store
+**/.pnpm-store
+**/coverage

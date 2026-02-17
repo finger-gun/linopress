@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.12.2",
+  "bin": {
+    "linopress": "dist/cli.js"
+  },
   "engines": {
     "node": ">=20"
   },
@@ -28,6 +31,7 @@
     "zod": "latest"
   },
   "devDependencies": {
+    "@types/node": "latest",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.0",
