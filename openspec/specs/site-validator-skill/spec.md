@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that performs comprehensive CLI-based site health validation including database integrity, filesystem permissions, plugin conflicts, content verification, and structured severity-classified reporting.
 
 ## Requirements
 

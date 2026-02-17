@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the sandboxed filesystem tool that provides read, write, copy, delete, and listing operations restricted to wp-content and temp directories, with path traversal prevention, atomic writes, and proper permission management.
 
 ## Requirements
 

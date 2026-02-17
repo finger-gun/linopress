@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the per-site Docker Compose isolation model that provides sandboxed, reproducible WordPress environments with managed lifecycle, networking, health monitoring, and resource constraints.
 
 ## Requirements
 
@@ -136,20 +136,6 @@ The system SHALL configure health checks for wordpress and db containers to dete
 
 - **WHEN** the wordpress container's web server crashes
 - **THEN** the health check reports unhealthy status and the system can trigger recovery
-
-### Requirement: Volume Backup and Restore
-
-The system SHALL support backing up and restoring wp-content and database volumes for disaster recovery.
-
-#### Scenario: Backup site volumes
-
-- **WHEN** a backup command is executed for a site
-- **THEN** the wp-content directory and database volume are archived to a timestamped backup file
-
-#### Scenario: Restore site from backup
-
-- **WHEN** a restore command is executed with a backup file
-- **THEN** the wp-content directory and database volume are restored to their backed-up state
 
 ### Requirement: Stack Name Uniqueness
 

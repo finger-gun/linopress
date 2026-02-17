@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that installs and configures WordPress within a provisioned container, including database setup, admin user creation, security baseline, permalinks, and installation verification.
 
 ## Requirements
 
@@ -183,20 +183,6 @@ The skill SHALL handle common installation errors and provide actionable error m
 
 - **WHEN** wp-cli cannot write wp-config.php
 - **THEN** the skill raises an error indicating filesystem permission issues
-
-### Requirement: Multi-Site Installation Support
-
-The skill SHALL optionally support WordPress multisite installation for future use cases.
-
-#### Scenario: Single-site installation (default)
-
-- **WHEN** no multisite flag is provided
-- **THEN** WordPress is installed as a single site
-
-#### Scenario: Multisite installation
-
-- **WHEN** the skill is invoked with multisite=true
-- **THEN** WordPress is installed with multisite enabled and network configured
 
 ### Requirement: WordPress Core Version Selection
 

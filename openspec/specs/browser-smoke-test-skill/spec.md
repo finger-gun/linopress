@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that performs automated headless browser testing of WordPress sites, capturing screenshots, detecting console and network errors, measuring load performance, and running basic accessibility checks.
 
 ## Requirements
 

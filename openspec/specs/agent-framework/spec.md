@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the Sisu-based agent runtime that orchestrates LLM-driven WordPress site creation through a layered architecture of skills and tools, with structured error handling, execution tracing, and security enforcement.
 
 ## Requirements
 
@@ -43,15 +43,15 @@ The system SHALL implement a four-layer architecture: LLM Planner → Skills →
 
 The system SHALL support optional Sisu middleware to extend agent behavior.
 
-#### Scenario: Enable control-flow middleware
+#### Scenario: Enable error boundary middleware
 
-- **WHEN** complex workflows require branching or early exit
-- **THEN** the system can enable control-flow middleware to manage execution flow
+- **WHEN** the agent needs resilient error handling
+- **THEN** the system can enable the error-boundary middleware to catch and handle skill failures gracefully
 
-#### Scenario: Enable react parser middleware
+#### Scenario: Enable tracing middleware
 
-- **WHEN** agent responses need structured self-reflection signals
-- **THEN** the system can enable the react-parser middleware to interpret those signals
+- **WHEN** the agent needs execution observability
+- **THEN** the system can enable the trace-viewer middleware to record all agent actions
 
 ### Requirement: Skill Registration
 
@@ -71,15 +71,6 @@ The system SHALL provide a skill registration mechanism where each skill exports
 
 - **WHEN** the LLM planner evaluates available capabilities
 - **THEN** it can query the list of registered skills and their signatures
-
-### Requirement: Tool Alias Compatibility
-
-The system SHALL register tool aliases to support ecosystem skills that expect snake_case tool names.
-
-#### Scenario: Alias terminal tool names
-
-- **WHEN** registering the Sisu terminal tool
-- **THEN** the system aliases terminalRun to bash, terminalReadFile to read_file, and terminalCd to cd
 
 ### Requirement: Skill Composability
 

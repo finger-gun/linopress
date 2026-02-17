@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that orchestrates the export process to produce portable site bundles containing wp-content, database dump, and manifest with full build metadata. Ensures bundle integrity, secret scanning, and atomic writes.
 
 ## Requirements
 
@@ -148,20 +148,6 @@ The skill SHALL record export metadata including timestamps, duration, and expor
 - **WHEN** export completes
 - **THEN** the manifest includes exportStatus: "success" or "partial"
 
-### Requirement: Incremental Export Support
-
-The skill SHALL optionally create incremental exports for sites exported multiple times.
-
-#### Scenario: First export is full
-
-- **WHEN** a site is exported for the first time
-- **THEN** the skill creates a complete bundle
-
-#### Scenario: Subsequent export detects changes
-
-- **WHEN** a previously exported site is exported again
-- **THEN** the skill optionally creates an incremental bundle with only changed files
-
 ### Requirement: Export Verification
 
 The skill SHALL verify the export bundle can be used for site restoration.
@@ -241,17 +227,3 @@ The skill SHALL perform exports atomically to prevent incomplete bundles.
 
 - **WHEN** export fails partway through
 - **THEN** the .tmp file is deleted and no incomplete bundle remains
-
-### Requirement: Multi-Site Export Support
-
-The skill SHALL optionally support exporting WordPress multisite networks.
-
-#### Scenario: Export single site from network
-
-- **WHEN** exporting a specific site from a multisite network
-- **THEN** the bundle includes only that site's content and database tables
-
-#### Scenario: Export entire network
-
-- **WHEN** exporting a full multisite network
-- **THEN** the bundle includes all sites' content and the network database

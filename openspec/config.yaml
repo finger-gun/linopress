@@ -31,6 +31,11 @@ context: |
     - Shared writable volume: /var/www/html/wp-content mounted into wordpress and agent-api
     - Browser allowlist: only local WordPress base URL (no external navigation by default)
 
+  Skills model:
+    - Skills are Claude-format directories containing SKILL.md with YAML frontmatter.
+    - Skills are loaded via @sisu-ai/mw-skills from the repo-owned skills/ directory.
+    - Do not implement skills as TypeScript modules under src/.
+
   Security & safety:
     - Terminal tool is command-allowlisted and root-scoped.
     - Filesystem writes restricted to wp-content (+ temp).

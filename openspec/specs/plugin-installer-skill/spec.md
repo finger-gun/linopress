@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that manages WordPress plugin lifecycle (search, install, activate, deactivate, uninstall) using a curated registry with dependency resolution and compatibility validation.
 
 ## Requirements
 
@@ -174,20 +174,6 @@ The skill SHALL retrieve the list of installed plugins with their status and ver
 
 - **WHEN** the skill queries for active plugins only
 - **THEN** it returns only plugins with status "active"
-
-### Requirement: Plugin Network Activation
-
-The skill SHALL optionally support network-activating plugins for multisite installations.
-
-#### Scenario: Network activate plugin
-
-- **WHEN** the skill activates a plugin on a multisite network
-- **THEN** it executes 'wp plugin activate <plugin> --network'
-
-#### Scenario: Single-site activation in multisite
-
-- **WHEN** a plugin should only be active on one site in a network
-- **THEN** the skill activates it without the --network flag
 
 ### Requirement: Plugin Installation Verification
 

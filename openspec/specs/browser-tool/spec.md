@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the headless browser automation tool that provides URL-allowlisted navigation, screenshot capture, console error detection, DOM inspection, and performance metrics collection for validating WordPress sites.
 
 ## Requirements
 

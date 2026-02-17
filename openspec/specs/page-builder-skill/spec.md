@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that creates pages, posts, menus, and content using block markup via wp-cli, with content templates, page hierarchy, media management, and SEO metadata support.
 
 ## Requirements
 

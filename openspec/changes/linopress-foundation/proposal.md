@@ -30,6 +30,8 @@ Linopress requires a complete foundational architecture to fulfill its vision as
 - `browser-smoke-test-skill`: Automated browser testing of critical pages; screenshot capture; console error checking; accessibility smoke tests
 - `self-healing-skill`: Failure analysis and automated repair cycles (max 2 attempts); targeted fixes for common issues; structured build reports on success or failure
 - `export-bundle-skill`: Orchestration of export process; bundle verification; manifest generation with site metadata
+- `build-orchestration`: Main build pipeline that takes a SiteSpec and orchestrates the full flow: provision → install → plugins → theme → content → validate → heal → export; CLI interface; BuildReport generation
+- `site-spec-extractor`: Extraction of structured SiteSpec from natural language prompts; validation of extracted fields; default inference for missing fields
 
 ### Modified Capabilities
 
@@ -38,6 +40,7 @@ Linopress requires a complete foundational architecture to fulfill its vision as
 ## Impact
 
 **New Dependencies**:
+
 - Docker & Docker Compose for runtime isolation
 - Sisu framework (@sisu-ai/core,@sisu-ai/mw-conversation-buffer, @sisu-ai/mw-error-boundary, @sisu-ai/mw-register-tools, @sisu-ai/mw-skills, @sisu-ai/mw-tool-calling, @sisu-ai/mw-trace-viewer, etc) for agent execution
 - vercel-labs/agent-browser for headless browser automation
@@ -46,12 +49,14 @@ Linopress requires a complete foundational architecture to fulfill its vision as
 - Node.js + TypeScript for agent-api and skills
 
 **New Infrastructure**:
+
 - `docker/` directory with compose files and container configs
 - `agent-api/` service directory with skill implementations
 - `tools/` directory with allowlisted tool definitions
 - `schemas/` directory for validation rules and templates
 
 **Security Architecture**:
+
 - Command allowlisting in terminal tool (no arbitrary shell execution)
 - Filesystem restrictions (writes limited to wp-content + temp)
 - Network isolation (no Docker socket exposure, URL allowlisting)
@@ -59,6 +64,7 @@ Linopress requires a complete foundational architecture to fulfill its vision as
 
 **Success Criteria**:
 End-to-end demo scenario must succeed:
+
 1. User provides prompt: "Create a modern yoga studio website with pricing, schedule, testimonials, and contact form"
 2. System provisions isolated WordPress stack via Docker Compose
 3. Agent executes skills to install WordPress, plugins, generate theme, create pages

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that generates and activates WordPress themes in three modes (parent + child, blank block, user-selected) with style seed integration, block pattern generation, and fallback sequencing.
 
 ## Requirements
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the skill that analyzes validation failures and applies bounded repair cycles (max 2) with targeted-then-aggressive strategies, covering database repair, permission fixes, plugin conflict isolation, theme fallback, and content regeneration.
 
 ## Requirements
 

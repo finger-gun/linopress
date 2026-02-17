@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the allowlisted WP-CLI tool that provides secure, deterministic WordPress automation within Docker containers, with command validation, parameter sanitization, structured output parsing, and timeout enforcement.
 
 ## Requirements
 
@@ -150,23 +150,63 @@ The system SHALL validate database connectivity before executing commands that i
 
 The system SHALL support the following wp-cli commands in the allowlist:
 
+**Core:**
+
 - `wp core install` - Install WordPress
 - `wp core version` - Check WordPress version
+
+**Plugins:**
+
 - `wp plugin install <plugin>` - Install plugins
 - `wp plugin activate <plugin>` - Activate plugins
+- `wp plugin deactivate <plugin>` - Deactivate plugins
+- `wp plugin uninstall <plugin>` - Remove plugins
 - `wp plugin list` - List installed plugins
+
+**Themes:**
+
 - `wp theme install <theme>` - Install themes
 - `wp theme activate <theme>` - Activate themes
 - `wp theme list` - List installed themes
-- `wp post create` - Create posts
-- `wp post list` - List posts
+
+**Content:**
+
+- `wp post create` - Create posts/pages
+- `wp post list` - List posts/pages
+- `wp post update` - Update existing posts/pages
+- `wp post delete` - Delete posts/pages
+- `wp post meta update` - Update post metadata
+- `wp comment delete` - Delete comments
+- `wp comment list` - List comments
+- `wp term create` - Create taxonomy terms
+- `wp term list` - List taxonomy terms
+- `wp media import` - Import media files
+
+**Navigation:**
+
 - `wp menu create <name>` - Create menus
-- `wp menu item add-*` - Add menu items
+- `wp menu item add-*` - Add menu items (wildcard)
+- `wp menu location assign` - Assign menu to theme location
+
+**Configuration:**
+
 - `wp option get <key>` - Get options
 - `wp option update <key> <value>` - Update options
+- `wp config set` - Set wp-config.php values
+- `wp rewrite structure` - Set permalink structure
+- `wp rewrite flush` - Flush rewrite rules
+- `wp language core install` - Install language packs
+
+**Database:**
+
 - `wp db export` - Export database
 - `wp db check` - Check database integrity
+- `wp db reset` - Reset database (used by wp-install skill for force reinstall)
+
+**Diagnostics:**
+
 - `wp doctor check` - Run WordPress health checks
+- `wp user list` - List WordPress users
 
 #### Scenario: Core installation command
 

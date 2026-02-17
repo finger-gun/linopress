@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD.
+Define the low-level export tool that archives wp-content, dumps the database, generates manifests, assembles tar.gz bundles, and validates bundle integrity with secret scanning.
 
 ## Requirements
 
@@ -123,20 +123,6 @@ The system SHALL write export bundles to a configured output directory accessibl
 
 - **WHEN** the export directory does not exist
 - **THEN** the tool creates it before writing the bundle
-
-### Requirement: Incremental Export Support
-
-The system SHALL optionally support incremental exports that only include changes since the last export.
-
-#### Scenario: Full export on first run
-
-- **WHEN** a site has never been exported
-- **THEN** the tool creates a complete export bundle
-
-#### Scenario: Incremental export on subsequent runs
-
-- **WHEN** a site is exported again after changes
-- **THEN** the tool optionally creates an incremental bundle with only modified files
 
 ### Requirement: Export Cleanup
 

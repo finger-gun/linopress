@@ -50,6 +50,14 @@ Linopress is currently defined through **OpenSpec** change/spec documents.
 - OpenSpec config/context: `openspec/config.yaml`
 - Foundation change set: `openspec/changes/linopress-foundation/`
 
+## Skills (Claude Format)
+
+Linopress skills are **filesystem-based Claude skills** (directories containing a `SKILL.md` with YAML frontmatter and instructions). The app loads them via `@sisu-ai/mw-skills` from the repo-owned `skills/` directory.
+
+Skills are not TypeScript modules under `src/`.
+
+Current skills live under `skills/` (wp-install, plugin-installer, theme-generator, page-builder, site-validator, browser-smoke-test, self-healing).
+
 Planned capability areas in the foundation scope include:
 
 - Agent framework and runtime isolation
@@ -64,6 +72,8 @@ Planned capability areas in the foundation scope include:
 🚧 **Early foundation phase**
 
 Core scaffolding exists for local development. Expect breaking changes while the foundation work lands.
+
+Recent foundation progress includes first-pass implementations of the browser tool (agent-browser CLI integration) and export bundle tooling.
 
 ## Quick Start (Local Dev)
 
@@ -103,6 +113,8 @@ node dist/cli.js provision yoga-studio --port 8080 --browser
 ## Developer Guide
 
 See `docs/developer-guide.md` for stack layout, workflows, and troubleshooting.
+
+Agent context: `AGENT.md`.
 
 ## Repository layout
 
