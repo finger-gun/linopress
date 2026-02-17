@@ -443,9 +443,20 @@ SiteSpec: ${JSON.stringify(siteSpec)}`,
     );
 
     if (siteSpec.pages?.length) {
+      const originalPrompt = input.prompt ?? '';
       await runAgentStep(
         'content',
         `Use the page-builder skill to create pages from the SiteSpec.
+
+IMPORTANT — Generate rich, visually impressive block content for EVERY page. Requirements:
+- Each page MUST have a hero/header section with a background color from the theme palette (NEVER plain white or transparent)
+- Each page MUST have at least 2-3 content sections with real, contextual text (not lorem ipsum)
+- Use WordPress blocks: cover, group, columns, buttons, spacers, headings, paragraphs
+- Use theme palette color references ("backgroundColor":"primary", "textColor":"contrast") — not hardcoded hex values
+- Delete any remaining default WordPress content (Sample Page ID 2, Hello World post ID 1, default comment ID 1)
+- Create a navigation menu with all pages in logical order (Home first, Contact last) and assign to the primary location
+- Set the homepage as the static front page${originalPrompt ? `\n\nOriginal user prompt for content tone and context: "${originalPrompt}"` : ''}
+${originalPrompt && /blog|news|article|journal|post/i.test(originalPrompt) ? '\nThe user wants a blog — create 3-5 sample blog posts with relevant categories, real content (2-3 paragraphs each), and excerpts. Set the blog page as the posts page.' : ''}
 SiteSpec: ${JSON.stringify(siteSpec)}`,
       );
     } else {

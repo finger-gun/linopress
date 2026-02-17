@@ -26,7 +26,6 @@ Provision or verify a WordPress site inside a Linopress container using allowlis
 - adminPassword (optional; generate if absent)
 - timezone (optional, default UTC)
 - language (optional, default en_US)
-- cleanupDefaultContent (optional)
 - forceReinstall (optional)
 
 ## Workflow
@@ -48,8 +47,11 @@ Provision or verify a WordPress site inside a Linopress container using allowlis
    - `wp option update timezone_string <tz>`
 8. Optional language:
    - `wp language core install <locale> --activate`
-9. Optional default content cleanup:
-   - Remove "Hello world!" post, "Sample Page", and default comment if present.
+9. **Default content cleanup** (ALWAYS perform — not optional):
+   - `wp post delete 1 --force` (remove "Hello world!" post)
+   - `wp post delete 2 --force` (remove "Sample Page")
+   - `wp comment delete 1 --force` (remove default comment)
+   - This prevents default content from polluting navigation and the site.
 10. Verify:
 
 - `wp core version --skip-plugins --skip-themes`
