@@ -150,8 +150,10 @@ const runAgentBrowser = async (args: string[], timeoutMs: number) => {
   return result.stdout;
 };
 
+const stripAnsi = (text: string) => text.replace(/\x1B\[[0-9;]*m/g, '');
+
 const parseScreenshotPath = (stdout: string) => {
-  const trimmed = stdout.trim();
+  const trimmed = stripAnsi(stdout).trim();
   if (!trimmed) return '';
   const lines = trimmed
     .split('\n')
