@@ -352,9 +352,70 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: calc(var(--radius-lg) + 2px);
   overflow: hidden;
+  position: relative;
+  isolation: isolate;
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.03),
     0 14px 30px -24px rgba(0, 0, 0, 0.55);
+}
+
+.prompt-panel::before,
+.prompt-panel::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.prompt-panel::before {
+  z-index: 0;
+  opacity: 0.55;
+  background:
+    linear-gradient(115deg,
+      rgba(0, 217, 255, 0.38),
+      rgba(124, 58, 237, 0.28) 32%,
+      rgba(244, 114, 182, 0.34) 56%,
+      rgba(0, 217, 255, 0.18) 76%,
+      rgba(0, 217, 255, 0.38)
+    );
+  background-size: 240% 240%;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  padding: 1px;
+  animation: prompt-electric-border 7s linear infinite;
+}
+
+.prompt-panel::after {
+  z-index: 0;
+  opacity: 0.52;
+  background:
+    radial-gradient(65% 26% at 50% 0%, rgba(0, 217, 255, 0.25), rgba(0, 217, 255, 0) 76%),
+    radial-gradient(60% 24% at 50% 100%, rgba(145, 114, 255, 0.2), rgba(145, 114, 255, 0) 76%);
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+.prompt-bar,
+.prompt-body {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes prompt-electric-border {
+  0% {
+    background-position: 0% 50%;
+    filter: saturate(1) brightness(0.95);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: saturate(1.12) brightness(1.02);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: saturate(1) brightness(0.95);
+  }
 }
 
 .prompt-panel .btn {
@@ -791,7 +852,8 @@ button {
 }
 
 .footer-wordmark-image {
-  width: clamp(34px, 4vw, 52px);
+  width: 100%;
+  max-width: 100px;
   height: auto;
   opacity: 0.92;
 }
@@ -887,6 +949,10 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .prompt-panel::before {
+    animation: none;
+  }
+
   .prompt-textarea {
     transition: none;
   }
