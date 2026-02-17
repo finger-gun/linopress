@@ -98,6 +98,16 @@ pnpm build
 node dist/cli.js provision yoga-studio --port 8080
 ```
 
+### Build a Site
+
+```bash
+node dist/cli.js build yoga-studio --prompt "Create a modern yoga studio website with pricing, schedule, testimonials, and contact form" --port 8080 --browser
+```
+
+```bash
+node dist/cli.js build yoga-studio --spec ./site-spec.json --port 8080
+```
+
 ### Start/Stop/Destroy
 
 ```bash

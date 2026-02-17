@@ -1,0 +1,30 @@
+{
+  "name": "Bold",
+  "description": "High contrast, confident color, energetic spacing.",
+  "colors": {
+    "primary": "#111827",
+    "secondary": "#F97316",
+    "accent": "#EF4444",
+    "background": "#FFF7ED",
+    "surface": "#FFFFFF",
+    "text": "#0F172A",
+    "muted": "#6B7280"
+  },
+  "typography": {
+    "headingFont": "Space Grotesk",
+    "bodyFont": "Inter Tight",
+    "scale": {
+      "base": 16,
+      "lg": 20,
+      "xl": 26
+    },
+    "lineHeight": 1.5
+  },
+  "spacing": {
+    "base": 10,
+    "md": 20,
+    "lg": 40,
+    "xl": 64
+  },
+  "keywords": ["bold", "energetic", "confident"]
+}

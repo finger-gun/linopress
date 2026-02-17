@@ -264,38 +264,38 @@
 
 ## 18. Build Orchestration and Main Flow
 
-- [ ] 18.1 Create main build orchestrator using agent framework
-- [ ] 18.2 Implement SiteSpec parsing and validation
-- [ ] 18.3 Add build step sequencing: extract → install → plugins → theme → content
-- [ ] 18.4 Implement validation + healing loop integration
-- [ ] 18.5 Add export triggering on successful validation
-- [ ] 18.6 Implement BuildReport generation with all metadata
-- [ ] 18.7 Add build progress tracking and logging
-- [ ] 18.8 Implement error handling and failure reporting
-- [ ] 18.9 Add build timeout enforcement
-- [ ] 18.10 Implement CLI interface for site creation
+- [x] 18.1 Create main build orchestrator using agent framework
+- [x] 18.2 Implement SiteSpec parsing and validation
+- [x] 18.3 Add build step sequencing: extract → install → plugins → theme → content
+- [x] 18.4 Implement validation + healing loop integration
+- [x] 18.5 Add export triggering on successful validation
+- [x] 18.6 Implement BuildReport generation with all metadata
+- [x] 18.7 Add build progress tracking and logging
+- [x] 18.8 Implement error handling and failure reporting
+- [x] 18.9 Add build timeout enforcement
+- [x] 18.10 Implement CLI interface for site creation
 
 ## 19. Style Seeds and Content Templates
 
-- [ ] 19.1 Create JSON schema for style seeds (colors, typography, spacing)
-- [ ] 19.2 Design 2-3 style seed examples (minimalist, bold, elegant)
-- [ ] 19.3 Create block pattern templates (hero, testimonials, pricing, FAQ)
-- [ ] 19.4 Implement content templates for common page types
-- [ ] 19.5 Add template variable substitution system
-- [ ] 19.6 Create validation schemas for templates
+- [x] 19.1 Create JSON schema for style seeds (colors, typography, spacing)
+- [x] 19.2 Design 2-3 style seed examples (minimalist, bold, elegant)
+- [x] 19.3 Create block pattern templates (hero, testimonials, pricing, FAQ)
+- [x] 19.4 Implement content templates for common page types
+- [x] 19.5 Add template variable substitution system
+- [x] 19.6 Create validation schemas for templates
 
 ## 20. Testing and Validation
 
-- [ ] 20.1 Write unit tests for all tool wrappers
-- [ ] 20.2 Write unit tests for all skills
+- [x] 20.1 Write unit tests for all tool wrappers
+- [x] 20.2 Write unit tests for all skills
 - [ ] 20.3 Create integration test for full build flow
 - [ ] 20.4 Test per-site isolation with concurrent builds
-- [ ] 20.5 Validate tool allowlists prevent unauthorized operations
+- [x] 20.5 Validate tool allowlists prevent unauthorized operations
 - [ ] 20.6 Test self-healing with various failure scenarios
 - [ ] 20.7 Test export bundle creation and restoration
-- [ ] 20.8 Verify security model (filesystem restrictions, command allowlisting)
+- [x] 20.8 Verify security model (filesystem restrictions, command allowlisting)
 - [ ] 20.9 Test browser automation and screenshot capture
-- [ ] 20.10 Validate BuildReport completeness
+- [x] 20.10 Validate BuildReport completeness
 
 ## 21. End-to-End Demo Implementation
 
@@ -312,13 +312,13 @@
 
 ## 22. Documentation and Polish
 
-- [ ] 22.1 Write README with project overview and setup instructions
-- [ ] 22.2 Document CLI usage and SiteSpec format
-- [ ] 22.3 Create Docker setup and troubleshooting guide
-- [ ] 22.4 Document tool allowlists and security model
-- [ ] 22.5 Write guide for adding new skills
-- [ ] 22.6 Document style seed format and examples
-- [ ] 22.7 Create BuildReport schema documentation
+- [x] 22.1 Write README with project overview and setup instructions
+- [x] 22.2 Document CLI usage and SiteSpec format
+- [x] 22.3 Create Docker setup and troubleshooting guide
+- [x] 22.4 Document tool allowlists and security model
+- [x] 22.5 Write guide for adding new skills
+- [x] 22.6 Document style seed format and examples
+- [x] 22.7 Create BuildReport schema documentation
 - [ ] 22.8 Add inline code comments and JSDoc
-- [ ] 22.9 Create architecture diagram
-- [ ] 22.10 Write deployment guide for exported sites
+- [x] 22.9 Create architecture diagram
+- [x] 22.10 Write deployment guide for exported sites

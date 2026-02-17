@@ -1,0 +1,30 @@
+{
+  "name": "Minimalist",
+  "description": "Clean lines, quiet neutrals, airy spacing.",
+  "colors": {
+    "primary": "#1F2933",
+    "secondary": "#52606D",
+    "accent": "#3B82F6",
+    "background": "#F8FAFC",
+    "surface": "#FFFFFF",
+    "text": "#111827",
+    "muted": "#9CA3AF"
+  },
+  "typography": {
+    "headingFont": "Playfair Display",
+    "bodyFont": "Source Sans 3",
+    "scale": {
+      "base": 16,
+      "lg": 18,
+      "xl": 22
+    },
+    "lineHeight": 1.6
+  },
+  "spacing": {
+    "base": 8,
+    "md": 16,
+    "lg": 32,
+    "xl": 56
+  },
+  "keywords": ["minimal", "calm", "light"]
+}

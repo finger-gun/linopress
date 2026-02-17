@@ -1,0 +1,30 @@
+{
+  "name": "Elegant",
+  "description": "Refined palette, soft contrast, classic typography.",
+  "colors": {
+    "primary": "#2D2A32",
+    "secondary": "#8B7E74",
+    "accent": "#C8A46C",
+    "background": "#F6F2EE",
+    "surface": "#FFFFFF",
+    "text": "#2B2B2B",
+    "muted": "#A8A29E"
+  },
+  "typography": {
+    "headingFont": "Cormorant Garamond",
+    "bodyFont": "Libre Franklin",
+    "scale": {
+      "base": 16,
+      "lg": 19,
+      "xl": 24
+    },
+    "lineHeight": 1.65
+  },
+  "spacing": {
+    "base": 8,
+    "md": 18,
+    "lg": 36,
+    "xl": 60
+  },
+  "keywords": ["elegant", "classic", "warm"]
+}

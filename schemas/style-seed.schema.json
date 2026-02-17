@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StyleSeed",
+  "type": "object",
+  "required": ["name", "colors", "typography", "spacing"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "colors": {
+      "type": "object",
+      "required": ["primary", "background", "text"],
+      "properties": {
+        "primary": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" },
+        "secondary": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" },
+        "accent": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" },
+        "background": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" },
+        "surface": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" },
+        "text": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" },
+        "muted": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" }
+      },
+      "additionalProperties": false
+    },
+    "typography": {
+      "type": "object",
+      "required": ["headingFont", "bodyFont"],
+      "properties": {
+        "headingFont": { "type": "string", "minLength": 1 },
+        "bodyFont": { "type": "string", "minLength": 1 },
+        "scale": {
+          "type": "object",
+          "properties": {
+            "base": { "type": "number", "minimum": 10 },
+            "lg": { "type": "number", "minimum": 12 },
+            "xl": { "type": "number", "minimum": 14 }
+          },
+          "additionalProperties": false
+        },
+        "lineHeight": { "type": "number", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "spacing": {
+      "type": "object",
+      "required": ["base"],
+      "properties": {
+        "base": { "type": "number", "minimum": 2 },
+        "md": { "type": "number", "minimum": 4 },
+        "lg": { "type": "number", "minimum": 8 },
+        "xl": { "type": "number", "minimum": 12 }
+      },
+      "additionalProperties": false
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

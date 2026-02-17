@@ -2,17 +2,24 @@
 
 import { provisionStack } from './stack/provision.js';
 import { destroyStack, startStack, stopStack } from './stack/lifecycle.js';
+import { buildFromInput } from './build/orchestrator.js';
 
 type ParsedArgs = {
   siteId?: string;
   port?: number;
   browser?: boolean;
+  prompt?: string;
+  specPath?: string;
+  baseUrl?: string;
+  buildTimeoutMs?: number;
+  noBrowser?: boolean;
+  noHeal?: boolean;
   help?: boolean;
 };
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--timeout ms]\n`,
   );
 };
 
@@ -31,6 +38,44 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
 
     if (value === '--browser') {
       parsed.browser = true;
+      continue;
+    }
+
+    if (value === '--no-browser') {
+      parsed.noBrowser = true;
+      continue;
+    }
+
+    if (value === '--no-heal') {
+      parsed.noHeal = true;
+      continue;
+    }
+
+    if (value === '--prompt') {
+      const promptValue = rest[i + 1];
+      i += 1;
+      parsed.prompt = promptValue;
+      continue;
+    }
+
+    if (value === '--spec') {
+      const specValue = rest[i + 1];
+      i += 1;
+      parsed.specPath = specValue;
+      continue;
+    }
+
+    if (value === '--base-url') {
+      const baseUrl = rest[i + 1];
+      i += 1;
+      parsed.baseUrl = baseUrl;
+      continue;
+    }
+
+    if (value === '--timeout') {
+      const timeoutValue = rest[i + 1];
+      i += 1;
+      parsed.buildTimeoutMs = timeoutValue ? Number(timeoutValue) : undefined;
       continue;
     }
 
@@ -102,6 +147,36 @@ const main = async () => {
   if (command === 'destroy') {
     await destroyStack(siteId);
     console.log(`\nDestroyed stack: ${siteId}`);
+    return;
+  }
+
+  if (command === 'build') {
+    if (!parsed.prompt && !parsed.specPath) {
+      console.error('Build requires --prompt or --spec.');
+      process.exit(1);
+    }
+
+    const report = await buildFromInput({
+      siteId,
+      prompt: parsed.prompt,
+      specPath: parsed.specPath,
+      port: parsed.port,
+      baseUrl: parsed.baseUrl,
+      enableBrowser: parsed.noBrowser ? false : (parsed.browser ?? false),
+      enableHealing: parsed.noHeal ? false : true,
+      buildTimeoutMs: parsed.buildTimeoutMs,
+    });
+
+    console.log(`\nBuild status: ${report.status}`);
+    console.log(
+      `Steps: ${report.steps.filter((step) => step.status === 'success').length}/${report.steps.length} complete`,
+    );
+    if (report.errors?.length) {
+      console.log('Errors:');
+      for (const err of report.errors) {
+        console.log(`- ${err.message}`);
+      }
+    }
     return;
   }
 
