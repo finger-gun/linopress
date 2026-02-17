@@ -2,13 +2,14 @@
 
 Linopress needs a temporary, high-impact landing page to communicate upcoming product value before the full platform launch. The current repo has templates and agent/runtime systems, but no dedicated “coming soon” marketing surface tailored for audience acquisition and messaging validation.
 
-This change intentionally stays lightweight (plain HTML/CSS) and should integrate cleanly with current repository structure without introducing frontend build complexity. The page content must highlight Linopress market promise (prompt → build → verify → self-heal → export), while keeping implementation and maintenance low friction.
+This change intentionally stays lightweight (plain HTML/CSS) and should integrate cleanly with current repository structure without introducing frontend build complexity. The page content must highlight Linopress market promise (prompt → build → verify → self-heal → export), while keeping implementation and maintenance low friction. Recent product-direction feedback requires that the hero visual no longer read as a terminal product; it must instead signal a web-based prompt composer experience.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - Ship a modern, visually compelling, static landing page using HTML and CSS only.
 - Provide clear, informative sections: hero, core value proposition, upcoming capabilities, trust/guardrails, and call to action.
+- Ensure the primary visual metaphor represents browser-based prompting (prompt field/page/window) rather than terminal execution.
 - Ensure responsive behavior across common viewport sizes.
 - Keep implementation easy to preview and modify by contributors.
 - Preserve Linopress product guardrails in messaging (deterministic execution, allowlisted tools, isolation, verification-first).
@@ -18,6 +19,7 @@ This change intentionally stays lightweight (plain HTML/CSS) and should integrat
 - Adding JS-heavy interactivity, framework runtime, or SPA architecture.
 - Implementing backend signup pipelines or CRM integrations.
 - Modifying core runtime orchestration, tool implementations, or container isolation behavior.
+- Building a functioning in-browser editor product surface; this is still a marketing mockup only.
 
 ## Decisions
 
@@ -36,12 +38,12 @@ This change intentionally stays lightweight (plain HTML/CSS) and should integrat
      - Injecting into WordPress templates immediately: rejected for this temporary phase; increases coupling.
 
 3. **Design language and content hierarchy**
-   - **Decision:** Use a "Dark Mode" first aesthetic with high-tech visual cues.
+   - **Decision:** Use a "Dark Mode" first aesthetic with high-tech visual cues, but shift hero framing from terminal chrome to web-app prompt composer chrome.
      - **Backgrounds:** Deep blacks (`#0a0a0a`) or dark grays (`#111`) to reduce eye strain and pop content.
      - **Accents:** Vibrant neon gradients (Purple/Cyan/Blue) for buttons, borders, and key text highlights, inspired by modern AI/Web3 product landing pages.
      - **Typography:** Clean, modern sans-serif (e.g., Inter or system fonts) with large, bold headings and readable body text.
-     - **Components:** Glassmorphism effects (translucent backgrounds with blur) for cards and sticky headers.
-   - **Why:** Aligns with the "AI/Automation" nature of Linopress and matches current industry design trends for developer tools.
+      - **Components:** Glassmorphism effects (translucent backgrounds with blur) for cards and sticky headers; hero mockup uses browser-like frame, prompt textarea/input, and action controls.
+   - **Why:** Aligns with the "AI/Automation" nature of Linopress while accurately signaling that interaction happens through a web interface, reducing product-positioning confusion.
    - **Alternatives considered:**
      - Light mode / Corporate style: rejected; feels too traditional and less "cutting edge" for an AI agent tool.
      - Minimal plain text style: rejected; insufficient marketing impact.
@@ -57,12 +59,20 @@ This change intentionally stays lightweight (plain HTML/CSS) and should integrat
    - **Decision:** Explicitly communicate sandbox/isolation and allowlist constraints as product trust signals; do not add external scripts by default.
    - **Why:** Reinforces Linopress differentiation and avoids introducing avoidable security surface.
    - **Alternatives considered:**
-     - Embedding third-party trackers/widgets initially: deferred; not needed for first launch page iteration.
+      - Embedding third-party trackers/widgets initially: deferred; not needed for first launch page iteration.
+
+6. **Hero interaction mock strategy**
+   - **Decision:** Represent prompting as a static “compose + generate” UI panel (e.g., textarea with sample prompt and non-functional primary button), replacing terminal command-line motifs.
+   - **Why:** Preserves a technical aesthetic while matching intended product mental model (web-based prompt-to-site flow).
+   - **Alternatives considered:**
+     - Keep terminal shell look and tweak text only: rejected; visual impression still implies CLI-first product.
+     - Full interactive demo widget: rejected for this change due to scope and maintenance overhead.
 
 ### Component Diagram (text)
 
 - `LandingPage (HTML)`
   - `HeroSection`
+    - `PromptComposerMock`
   - `ValuePropsSection`
   - `HowItWorksSection`
   - `TrustAndSafetySection`

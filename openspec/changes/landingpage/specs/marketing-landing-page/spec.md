@@ -1,5 +1,12 @@
 ## ADDED Requirements
 
+### Requirement: Landing page hero uses a web-based prompt UI metaphor
+The landing page hero SHALL present Linopress as a browser-based prompting experience by using a prompt composer visual (field/page/window style) instead of terminal-first UI chrome.
+
+#### Scenario: Hero visual aligns with product interaction model
+- **WHEN** a user views the hero section
+- **THEN** the primary mock interface reads as a web prompt composer and does not look like a command-line terminal
+
 ### Requirement: Temporary marketing landing page exists
 The system SHALL provide a temporary Linopress marketing landing page that is publicly viewable and communicates that the product is coming soon.
 
