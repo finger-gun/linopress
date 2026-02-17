@@ -228,38 +228,38 @@
 
 ## 15. Site Spec Extractor Skill Implementation
 
-- [ ] 15.1 Create siteSpecExtractorSkill with Sisu skill definition (Claude skill SKILL.md)
-- [ ] 15.2 Define SiteSpec output schema contract (pages, plugins, theme mode, style seed, business info)
-- [ ] 15.3 Implement prompt-to-SiteSpec extraction via LLM with structured output
-- [ ] 15.4 Add default inference for unspecified fields (timezone, language, permalink structure)
-- [ ] 15.5 Implement SiteSpec validation against Zod schema before downstream use
-- [ ] 15.6 Add plugin registry constraint (reject plugins not in curated registry)
-- [ ] 15.7 Implement extraction result metadata (confidence, inferred fields, ambiguities)
-- [ ] 15.8 Add extraction error handling for ambiguous or underspecified prompts
+- [x] 15.1 Create siteSpecExtractorSkill with Sisu skill definition (Claude skill SKILL.md)
+- [x] 15.2 Define SiteSpec output schema contract (pages, plugins, theme mode, style seed, business info)
+- [x] 15.3 Implement prompt-to-SiteSpec extraction via LLM with structured output
+- [x] 15.4 Add default inference for unspecified fields (timezone, language, permalink structure)
+- [x] 15.5 Implement SiteSpec validation against Zod schema before downstream use
+- [x] 15.6 Add plugin registry constraint (reject plugins not in curated registry)
+- [x] 15.7 Implement extraction result metadata (confidence, inferred fields, ambiguities)
+- [x] 15.8 Add extraction error handling for ambiguous or underspecified prompts
 
 ## 16. Export Bundle Skill Implementation
 
-- [ ] 16.1 Create exportBundleSkill with Sisu skill definition (Claude skill SKILL.md)
-- [ ] 16.2 Implement export orchestration: invoke export tool for wp-content archive, DB dump, manifest
-- [ ] 16.3 Add pre-export validation (site must pass CLI + browser checks before export)
-- [ ] 16.4 Implement BuildReport inclusion in manifest generation
-- [ ] 16.5 Add screenshot bundling into export archive
-- [ ] 16.6 Implement export completion status reporting and error handling
+- [x] 16.1 Create exportBundleSkill with Sisu skill definition (Claude skill SKILL.md)
+- [x] 16.2 Implement export orchestration: invoke export tool for wp-content archive, DB dump, manifest
+- [x] 16.3 Add pre-export validation (site must pass CLI + browser checks before export)
+- [x] 16.4 Implement BuildReport inclusion in manifest generation
+- [x] 16.5 Add screenshot bundling into export archive
+- [x] 16.6 Implement export completion status reporting and error handling
 
 ## 17. Agent Framework Integration
 
-- [ ] 17.1 Initialize Sisu agent runtime with LLM adapter configuration
-- [ ] 17.2 Register all tools with Sisu (wp-cli, file, browser, export)
-- [ ] 17.3 Register all skills with Sisu
-- [ ] 17.4 Implement skill composability (skills calling other skills)
-- [ ] 17.5 Add agent state management for build progress
-- [ ] 17.6 Implement error propagation from tools → skills → planner
-- [ ] 17.7 Add LLM adapter support for Claude and GPT
-- [ ] 17.8 Implement execution tracing for all agent actions
-- [ ] 17.9 Add skill timeout protection
-- [ ] 17.10 Implement tool allowlist enforcement
-- [ ] 17.11 Add graceful shutdown handling
-- [ ] 17.12 Implement concurrent skill execution where safe
+- [x] 17.1 Initialize Sisu agent runtime with LLM adapter configuration
+- [x] 17.2 Register all tools with Sisu (wp-cli, file, browser, export)
+- [x] 17.3 Register all skills with Sisu
+- [x] 17.4 Implement skill composability (skills calling other skills)
+- [x] 17.5 Add agent state management for build progress
+- [x] 17.6 Implement error propagation from tools → skills → planner
+- [x] 17.7 Add LLM adapter support for Claude and GPT
+- [x] 17.8 Implement execution tracing for all agent actions
+- [x] 17.9 Add skill timeout protection
+- [x] 17.10 Implement tool allowlist enforcement
+- [x] 17.11 Add graceful shutdown handling
+- [x] 17.12 Implement concurrent skill execution where safe
 - [ ] 17.13 Add skill versioning and compatibility checks
 
 ## 18. Build Orchestration and Main Flow

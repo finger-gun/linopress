@@ -2,7 +2,17 @@ import { z } from 'zod';
 
 export const contentTemplateSchema = z.object({
   id: z.string().min(1),
-  data: z.record(z.unknown()).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const businessInfoSchema = z.object({
+  name: z.string().min(1),
+  tagline: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  phone: z.string().min(1).optional(),
+  email: z.string().email().optional(),
+  address: z.string().min(1).optional(),
+  hours: z.string().min(1).optional(),
 });
 
 export const pageSpecSchema = z.object({
@@ -22,6 +32,17 @@ export const siteSpecSchema = z.object({
   plugins: z.array(z.string().min(1)).optional(),
   pages: z.array(pageSpecSchema).optional(),
   language: z.string().min(2).optional(),
+  timezone: z.string().min(1).optional(),
+  permalinkStructure: z.string().min(1).optional(),
+  business: businessInfoSchema.optional(),
+});
+
+export const siteSpecExtractionSchema = z.object({
+  siteSpec: siteSpecSchema,
+  warnings: z.array(z.string().min(1)).default([]),
+  inferredDefaults: z.array(z.string().min(1)).default([]),
+  confidence: z.number().min(0).max(1),
+  ambiguities: z.array(z.string().min(1)).default([]),
 });
 
 export const buildStepSchema = z.object({
@@ -30,7 +51,7 @@ export const buildStepSchema = z.object({
   status: z.enum(['pending', 'in_progress', 'success', 'failed']),
   startedAt: z.string().optional(),
   finishedAt: z.string().optional(),
-  details: z.record(z.unknown()).optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const errorLogSchema = z.object({
@@ -38,7 +59,7 @@ export const errorLogSchema = z.object({
   stepId: z.string().min(1).optional(),
   code: z.string().min(1).optional(),
   timestamp: z.string().min(1),
-  details: z.record(z.unknown()).optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const healingCycleSchema = z.object({
@@ -106,7 +127,7 @@ export const manifestSchema = z.object({
 
 export const validateSiteSpec = (input: unknown) => siteSpecSchema.parse(input);
 export const validatePageSpec = (input: unknown) => pageSpecSchema.parse(input);
+export const validateSiteSpecExtraction = (input: unknown) => siteSpecExtractionSchema.parse(input);
 export const validateBuildReport = (input: unknown) => buildReportSchema.parse(input);
-export const validateValidationResult = (input: unknown) =>
-  validationResultSchema.parse(input);
+export const validateValidationResult = (input: unknown) => validationResultSchema.parse(input);
 export const validateManifest = (input: unknown) => manifestSchema.parse(input);

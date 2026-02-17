@@ -5,6 +5,16 @@ export type ContentTemplate = {
   data?: Record<string, unknown>;
 };
 
+export type BusinessInfo = {
+  name: string;
+  tagline?: string;
+  description?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  hours?: string;
+};
+
 export interface PageSpec {
   title: string;
   slug: string;
@@ -22,6 +32,17 @@ export interface SiteSpec {
   plugins?: string[];
   pages?: PageSpec[];
   language?: string;
+  timezone?: string;
+  permalinkStructure?: string;
+  business?: BusinessInfo;
+}
+
+export interface SiteSpecExtractionResult {
+  siteSpec: SiteSpec;
+  warnings: string[];
+  inferredDefaults: string[];
+  confidence: number;
+  ambiguities: string[];
 }
 
 export interface BuildStep {
@@ -45,7 +66,7 @@ export interface HealingCycle {
   cycle: number;
   startedAt: string;
   finishedAt?: string;
-  actions: Array<{ action: string; detail?: string }>
+  actions: Array<{ action: string; detail?: string }>;
   result: 'success' | 'partial' | 'failed';
 }
 
