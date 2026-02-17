@@ -36,9 +36,14 @@ This change intentionally stays lightweight (plain HTML/CSS) and should integrat
      - Injecting into WordPress templates immediately: rejected for this temporary phase; increases coupling.
 
 3. **Design language and content hierarchy**
-   - **Decision:** Use a modern visual system (bold gradient accents, high contrast typography, card-based feature sections, clear spacing rhythm).
-   - **Why:** Matches user goal of eye-catching, modern, informative page while staying achievable in pure CSS.
+   - **Decision:** Use a "Dark Mode" first aesthetic with high-tech visual cues.
+     - **Backgrounds:** Deep blacks (`#0a0a0a`) or dark grays (`#111`) to reduce eye strain and pop content.
+     - **Accents:** Vibrant neon gradients (Purple/Cyan/Blue) for buttons, borders, and key text highlights, inspired by modern AI/Web3 product landing pages.
+     - **Typography:** Clean, modern sans-serif (e.g., Inter or system fonts) with large, bold headings and readable body text.
+     - **Components:** Glassmorphism effects (translucent backgrounds with blur) for cards and sticky headers.
+   - **Why:** Aligns with the "AI/Automation" nature of Linopress and matches current industry design trends for developer tools.
    - **Alternatives considered:**
+     - Light mode / Corporate style: rejected; feels too traditional and less "cutting edge" for an AI agent tool.
      - Minimal plain text style: rejected; insufficient marketing impact.
      - Highly animated experience: rejected; introduces complexity and accessibility risk.
 

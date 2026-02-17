@@ -21,12 +21,19 @@ The page SHALL include informative content that explains Linopress value for the
 - **WHEN** a user reads the main content sections
 - **THEN** they can identify what Linopress is, who it is for, and what outcomes it promises
 
-### Requirement: Landing page visual design is modern and eye-catching
-The page SHALL present a modern visual style with clear hierarchy, strong hero presentation, and polished section-level styling appropriate for hype-building communication.
+### Requirement: Landing page visual design is clean, simple, and powerful
+The page SHALL use a Linear/Vercel-inspired aesthetic with bold typography, electric teal accents, and smooth, restrained animations that support readability and perceived quality.
 
 #### Scenario: Visual hierarchy supports first impression
 - **WHEN** a user loads the page on desktop viewport
-- **THEN** the hero, value sections, and call-to-action are visually distinct and immediately scannable
+- **THEN** the hero, supporting sections, and CTAs are visually distinct, easy to scan, and consistent with a clean, high-contrast style
+
+### Requirement: Landing page includes required section flow
+The page SHALL include the following sections in a clear narrative order: hero with primary CTA, feature cards, how-it-works flow, and a final CTA section.
+
+#### Scenario: Required sections are present and ordered
+- **WHEN** a user scrolls the page from top to bottom
+- **THEN** they encounter hero with CTA, feature cards, how-it-works, and final CTA in a coherent sequence
 
 ### Requirement: Landing page is responsive across common viewport sizes
 The page MUST remain usable and readable on mobile and desktop widths using responsive layout rules.
@@ -36,11 +43,11 @@ The page MUST remain usable and readable on mobile and desktop widths using resp
 - **THEN** content stacks appropriately and text/buttons remain legible without horizontal overflow
 
 ### Requirement: Landing page includes clear call to action
-The page SHALL include at least one prominent call to action for users to register interest or follow progress.
+The page SHALL include prominent calls to action in both the hero and final CTA section to guide users to the next step.
 
-#### Scenario: Call to action is discoverable
+#### Scenario: Calls to action are discoverable
 - **WHEN** a user scans the page from top to bottom
-- **THEN** they encounter a clearly labeled action that indicates the next step
+- **THEN** they encounter a clear primary CTA in the hero and a reinforcing CTA near the end of the page
 
 ### Requirement: Landing page messaging reflects security and sandbox constraints
 The page MUST avoid implying unrestricted execution and SHALL align trust messaging with Linopress guardrails (allowlisted tools, isolated runtime, verification-first approach).
