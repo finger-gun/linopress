@@ -58,9 +58,15 @@ These depend on context — use your professional judgment:
 ## Workflow
 
 1. If you received a pre-flight report listing functional issues (missing pages, empty content, etc.), address those first — they're verified problems.
-2. Look at each screenshot. Describe what you see and assess the quality.
-3. Fix issues using `wp_cli` and `file` tools. Make targeted, surgical fixes.
-4. After fixes, flush rewrite rules: `wp rewrite flush --hard`
+2. Run a quick content audit with wp-cli to confirm required pages, content length, and menu/front-page settings:
+   - `wp post list --post_type=page --post_status=any --fields=ID,post_title,post_name,post_status,post_content --format=json`
+   - `wp menu list --format=json`
+   - `wp option get show_on_front`
+   - `wp option get page_on_front`
+     Use this data to fix missing pages, empty pages, and navigation/front-page configuration.
+3. Look at each screenshot. Describe what you see and assess the quality.
+4. Fix issues using `wp_cli` and `file` tools. Make targeted, surgical fixes.
+5. After fixes, flush rewrite rules: `wp rewrite flush --hard`
 
 ## Available Fix Strategies
 
@@ -79,6 +85,7 @@ These depend on context — use your professional judgment:
 - Don't install new plugins or themes. Work with what's there.
 - Don't add or remove pages unless the SiteSpec requires it.
 - Make surgical fixes, not wholesale rewrites.
+- If pre-flight issues are provided, you must count them as issuesFound and either fix them or list them in remainingIssues.
 
 ## Output
 
@@ -91,6 +98,12 @@ Return a structured review report:
   "issuesFixed": 4,
   "remainingIssues": ["Description of any unfixed issue"],
   "pagesReviewed": ["home", "about", "contact"],
+  "observations": [
+    {
+      "page": "home",
+      "summary": "Large hero with author portrait, clear CTA, but intro text is thin."
+    }
+  ],
   "actions": [{ "page": "home", "issue": "description", "fix": "what you did" }]
 }
 ```

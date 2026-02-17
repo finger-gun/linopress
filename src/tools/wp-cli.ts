@@ -22,6 +22,7 @@ export const WP_CLI_ALLOWLIST = [
   'wp media import',
   'wp post delete',
   'wp post create',
+  'wp post get',
   'wp post list',
   'wp post meta update',
   'wp post update',

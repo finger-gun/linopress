@@ -22,7 +22,7 @@ pnpm build
 
 ### Browser Tool Dependency
 
-The browser tool uses the `agent-browser` CLI for headless automation. Install it once on your machine:
+The browser tool uses the `agent-browser` (https://github.com/vercel-labs/agent-browser) CLI for headless automation. Install it once on your machine:
 
 ```bash
 npm install -g agent-browser

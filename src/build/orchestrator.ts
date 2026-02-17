@@ -33,7 +33,7 @@ export type BuildOrchestratorInput = {
   reviewCycles?: number;
   /** Max self-healing cycles (default 2) */
   healingCycles?: number;
-  /** Max pages to screenshot for visual review (default 5) */
+  /** Max pages to screenshot for visual review (default 3) */
   maxReviewPages?: number;
 };
 
@@ -327,21 +327,65 @@ const capturePageScreenshots = async (
   return screenshotPaths;
 };
 
-// Encode screenshot files as base64 data URIs for the LLM.
-const screenshotsToBase64 = async (screenshotPaths: Array<{ page: string; path: string }>) => {
-  const results: Array<{ page: string; dataUri: string }> = [];
+const formatBytes = (value?: number) => {
+  if (!value || Number.isNaN(value)) return 'unknown size';
+  if (value < 1024) return `${value} B`;
+  const kb = value / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(2)} MB`;
+};
+
+const getScreenshotMeta = async (screenshotPaths: Array<{ page: string; path: string }>) => {
+  const results: Array<{ page: string; path: string; sizeBytes?: number }> = [];
   for (const { page, path: filePath } of screenshotPaths) {
+    try {
+      const stat = await fs.stat(filePath);
+      results.push({ page, path: filePath, sizeBytes: stat.size });
+    } catch (error) {
+      console.log(
+        `[review] Failed to stat screenshot ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      results.push({ page, path: filePath });
+    }
+  }
+  return results;
+};
+
+// Encode screenshot files as base64 data URIs for the LLM.
+const screenshotsToBase64 = async (
+  screenshotPaths: Array<{ page: string; path: string }>,
+  options?: { maxImages?: number; maxTotalChars?: number },
+) => {
+  const results: Array<{ page: string; dataUri: string }> = [];
+  const skipped: Array<{ page: string; reason: string }> = [];
+  const maxImages = options?.maxImages ?? screenshotPaths.length;
+  const maxTotalChars = options?.maxTotalChars ?? Number.POSITIVE_INFINITY;
+  let totalChars = 0;
+
+  for (const { page, path: filePath } of screenshotPaths) {
+    if (results.length >= maxImages) {
+      skipped.push({ page, reason: `max images limit (${maxImages})` });
+      continue;
+    }
     try {
       const buffer = await fs.readFile(filePath);
       const base64 = buffer.toString('base64');
-      results.push({ page, dataUri: `data:image/png;base64,${base64}` });
+      const dataUri = `data:image/png;base64,${base64}`;
+      const nextTotal = totalChars + dataUri.length;
+      if (results.length > 0 && nextTotal > maxTotalChars) {
+        skipped.push({ page, reason: 'image payload too large for context' });
+        continue;
+      }
+      results.push({ page, dataUri });
+      totalChars = nextTotal;
     } catch (error) {
       console.log(
         `[review] Failed to read screenshot ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
-  return results;
+  return { screenshots: results, skipped };
 };
 
 // Run a visual review cycle: screenshot pages, send to LLM for review, let it fix issues.
@@ -380,8 +424,30 @@ const runVisualReview = async (
       break;
     }
 
+    const screenshotMeta = await getScreenshotMeta(screenshotPaths);
+    const maxReviewImages = Math.min(3, screenshotMeta.length);
+    if (screenshotMeta.length > maxReviewImages) {
+      console.log(
+        `[review] Limiting review to ${maxReviewImages}/${screenshotMeta.length} screenshots to control context size`,
+      );
+    }
+    const selectedScreenshots = screenshotMeta.slice(0, maxReviewImages);
+    console.log('[review] Using screenshots:');
+    for (const shot of selectedScreenshots) {
+      const label = path.basename(shot.path);
+      console.log(`[review]   - ${shot.page}: ${formatBytes(shot.sizeBytes)} (${label})`);
+    }
+
     // 2. Encode as base64
-    const screenshots = await screenshotsToBase64(screenshotPaths);
+    const { screenshots, skipped } = await screenshotsToBase64(selectedScreenshots, {
+      maxImages: maxReviewImages,
+      maxTotalChars: 1_200_000,
+    });
+    if (skipped.length > 0) {
+      for (const skip of skipped) {
+        console.log(`[review] Skipping ${skip.page} screenshot: ${skip.reason}`);
+      }
+    }
     if (screenshots.length === 0) {
       console.log('[review] Failed to encode screenshots, skipping visual review');
       break;
@@ -426,12 +492,43 @@ const runVisualReview = async (
       const responseText = getAssistantText(ctx);
       let issuesFound = 0;
       let issuesFixed = 0;
+      let remainingIssues: string[] = [];
+      let pagesReviewed: string[] = [];
+      let observations: Array<{ page?: string; summary?: string }> = [];
+      let actions: Array<{ page?: string; issue?: string; fix?: string }> = [];
       try {
         const jsonMatch = responseText.match(/\{[\s\S]*"issuesFound"[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
           issuesFound = parsed.issuesFound ?? 0;
           issuesFixed = parsed.issuesFixed ?? 0;
+          if (Array.isArray(parsed.remainingIssues)) {
+            remainingIssues = parsed.remainingIssues.filter(
+              (issue: unknown) => typeof issue === 'string',
+            );
+          }
+          if (Array.isArray(parsed.pagesReviewed)) {
+            pagesReviewed = parsed.pagesReviewed.filter(
+              (page: unknown) => typeof page === 'string',
+            );
+          }
+          if (Array.isArray(parsed.observations)) {
+            observations = parsed.observations
+              .filter((entry: unknown) => entry && typeof entry === 'object')
+              .map((entry: Record<string, unknown>) => ({
+                page: typeof entry.page === 'string' ? entry.page : undefined,
+                summary: typeof entry.summary === 'string' ? entry.summary : undefined,
+              }));
+          }
+          if (Array.isArray(parsed.actions)) {
+            actions = parsed.actions
+              .filter((entry: unknown) => entry && typeof entry === 'object')
+              .map((entry: Record<string, unknown>) => ({
+                page: typeof entry.page === 'string' ? entry.page : undefined,
+                issue: typeof entry.issue === 'string' ? entry.issue : undefined,
+                fix: typeof entry.fix === 'string' ? entry.fix : undefined,
+              }));
+          }
         }
       } catch {
         // couldn't parse structured output, that's ok
@@ -439,6 +536,42 @@ const runVisualReview = async (
 
       reviewDetails.push({ cycle, issuesFound, issuesFixed });
       console.log(`[review] Cycle ${cycle}: found ${issuesFound} issues, fixed ${issuesFixed}`);
+      if (pagesReviewed.length > 0) {
+        console.log(`[review] Pages reviewed: ${pagesReviewed.join(', ')}`);
+      }
+      if (observations.length > 0) {
+        const limited = observations.slice(0, 6);
+        for (const note of limited) {
+          const pageLabel = note.page ? ` (${note.page})` : '';
+          if (note.summary) {
+            console.log(`[review] Observation${pageLabel}: ${note.summary}`);
+          }
+        }
+        if (observations.length > limited.length) {
+          console.log(`[review] ${observations.length - limited.length} more observations omitted`);
+        }
+      }
+      if (actions.length > 0) {
+        const limited = actions.slice(0, 6);
+        for (const action of limited) {
+          const pageLabel = action.page ? ` (${action.page})` : '';
+          const issueText = action.issue ? `issue: ${action.issue}` : 'issue: (unspecified)';
+          const fixText = action.fix ? `fix: ${action.fix}` : 'fix: (unspecified)';
+          console.log(`[review] Fix${pageLabel}: ${issueText}; ${fixText}`);
+        }
+        if (actions.length > limited.length) {
+          console.log(`[review] ${actions.length - limited.length} more fixes omitted`);
+        }
+      }
+      if (remainingIssues.length > 0) {
+        console.log('[review] Remaining issues:');
+        for (const issue of remainingIssues.slice(0, 6)) {
+          console.log(`[review]   - ${issue}`);
+        }
+        if (remainingIssues.length > 6) {
+          console.log(`[review] ${remainingIssues.length - 6} more remaining issues omitted`);
+        }
+      }
 
       // If no issues found, we're done
       if (issuesFound === 0) {
@@ -926,7 +1059,7 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
         steps,
         errors,
         input.reviewCycles ?? 2,
-        input.maxReviewPages ?? 5,
+        input.maxReviewPages ?? 3,
       );
     } else {
       markStep(steps, 'review', 'success', { skipped: true, reason: 'review not enabled' });
