@@ -23,6 +23,7 @@ export type BuildOrchestratorInput = {
   enableHealing?: boolean;
   buildTimeoutMs?: number;
   skillTimeoutMs?: number;
+  yolo?: boolean;
   modelProvider?: LlmProvider;
   model?: string;
   skillsDir?: string;
@@ -112,8 +113,12 @@ const extractSiteSpecFromPrompt = async (
   runtimeOptions: AgentRuntimeOptions,
   prompt: string,
   siteId: string,
+  yolo?: boolean,
 ): Promise<SiteSpec> => {
   const runtime = createAgentRuntime(runtimeOptions);
+  const yoloHint = yolo
+    ? '\nIMPORTANT: --yolo mode is enabled. You MUST use themeMode "blank" — no parent themes allowed.'
+    : '';
   const instruction = `Use the site-spec-extractor skill to extract a SiteSpec for this prompt.
 Return ONLY valid JSON for the SiteSpec extraction result:
 {
@@ -123,7 +128,7 @@ Return ONLY valid JSON for the SiteSpec extraction result:
   "confidence": 0.0,
   "ambiguities": []
 }
-
+${yoloHint}
 Prompt: "${prompt}"`;
 
   const ctx = await runtime.run(instruction);
@@ -363,13 +368,24 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
 
     if (!siteSpec && input.prompt) {
       markStep(steps, 'extract', 'in_progress');
-      siteSpec = await extractSiteSpecFromPrompt(runtimeOptions, input.prompt, input.siteId);
+      siteSpec = await extractSiteSpecFromPrompt(
+        runtimeOptions,
+        input.prompt,
+        input.siteId,
+        input.yolo,
+      );
       siteSpec = validateSiteSpec(siteSpec);
       markStep(steps, 'extract', 'success');
     }
 
     if (!siteSpec) {
       throw new Error('No SiteSpec provided. Use --spec or --prompt to create one.');
+    }
+
+    // --yolo forces blank theme mode (no parent theme, fully custom from scratch)
+    if (input.yolo && siteSpec.themeMode !== 'blank') {
+      console.log('[build] --yolo: forcing themeMode to "blank"');
+      siteSpec.themeMode = 'blank';
     }
 
     const baseUrl = input.baseUrl ?? DEFAULT_BASE_URL(input.port);

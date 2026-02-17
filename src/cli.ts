@@ -14,12 +14,13 @@ type ParsedArgs = {
   buildTimeoutMs?: number;
   noBrowser?: boolean;
   noHeal?: boolean;
+  yolo?: boolean;
   help?: boolean;
 };
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--timeout ms]\n`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--yolo] [--timeout ms]\n`,
   );
 };
 
@@ -48,6 +49,11 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
 
     if (value === '--no-heal') {
       parsed.noHeal = true;
+      continue;
+    }
+
+    if (value === '--yolo') {
+      parsed.yolo = true;
       continue;
     }
 
@@ -164,6 +170,7 @@ const main = async () => {
       baseUrl: parsed.baseUrl,
       enableBrowser: parsed.noBrowser ? false : (parsed.browser ?? false),
       enableHealing: parsed.noHeal ? false : true,
+      yolo: parsed.yolo,
       buildTimeoutMs: parsed.buildTimeoutMs,
     });
 

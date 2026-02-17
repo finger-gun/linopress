@@ -45,13 +45,68 @@ Create or activate a theme based on the selected mode, using wp-cli and restrict
 
 ### Blank mode
 
-1. Create a block theme with:
-   - style.css header
-   - theme.json with palette + typography
-   - templates and parts
-   - patterns (hero, testimonials, pricing)
-2. Validate required files.
-3. `wp theme activate <slug>`
+Create a fully custom block theme from scratch. The `styleSeed` tokens drive every design decision.
+
+1. Derive a design system from the styleSeed:
+   - **Color palette**: 4-6 colors (primary, secondary, accent, background, surface, text). Map styleSeed mood to concrete hex values. Dark themes should use dark backgrounds with light text and vibrant accents. Light themes should use white/neutral backgrounds.
+   - **Typography**: Choose 1-2 Google Fonts or system font stacks that match the styleSeed mood. Define sizes for headings (h1-h4), body, and small text.
+   - **Spacing**: Define a spacing scale (small, medium, large, xl) that fits the density implied by the styleSeed.
+
+2. Create the theme directory at `wp-content/themes/<slug>/` with these files:
+
+   **style.css** -- Theme header with name, description, version, requires, text domain.
+
+   **theme.json** -- Full block theme configuration:
+
+   ```json
+   {
+     "$schema": "https://schemas.wp.org/wp/6.4/theme.json",
+     "version": 3,
+     "settings": {
+       "color": { "palette": [...] },
+       "typography": { "fontFamilies": [...], "fontSizes": [...] },
+       "spacing": { "spacingSizes": [...] },
+       "layout": { "contentSize": "800px", "wideSize": "1200px" }
+     },
+     "styles": {
+       "color": { "background": "...", "text": "..." },
+       "typography": { "fontFamily": "...", "fontSize": "..." },
+       "elements": {
+         "heading": { "typography": { "fontFamily": "..." } },
+         "link": { "color": { "text": "..." } },
+         "button": { "color": { "background": "...", "text": "..." } }
+       }
+     }
+   }
+   ```
+
+   **templates/index.html** -- Main template with header, content, footer parts:
+
+   ```html
+   <!-- wp:template-part {"slug":"header","area":"header"} /-->
+   <!-- wp:group {"tagName":"main","layout":{"type":"constrained"}} -->
+   <main class="wp-block-group">
+     <!-- wp:post-content /-->
+   </main>
+   <!-- /wp:group -->
+   <!-- wp:template-part {"slug":"footer","area":"footer"} /-->
+   ```
+
+   **templates/page.html** -- Page template (similar structure, can differ from index).
+
+   **templates/home.html** -- Front page template. Should include a hero section, key content areas, and call-to-action blocks styled with the theme palette.
+
+   **templates/single.html** -- Single post template with post title, meta, content, and comments.
+
+   **templates/404.html** -- Custom 404 page.
+
+   **parts/header.html** -- Site header with site title, navigation block, and optional logo placeholder. Use theme palette colors for background and text.
+
+   **parts/footer.html** -- Site footer with copyright, optional social links, and secondary navigation.
+
+3. Validate that all required files exist (style.css, theme.json, templates/index.html, parts/header.html, parts/footer.html).
+4. `wp theme activate <slug>`
+5. Verify activation with `wp theme list`.
 
 ### User-selected
 
