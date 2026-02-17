@@ -13,7 +13,7 @@ node dist/cli.js build motorcycle-shop \
 
 ## High-Level Overview
 
-The build pipeline has 9 sequential steps. Each step either runs an AI agent with a specific skill or performs a direct infrastructure operation.
+The build pipeline has 11 sequential steps for a new website. Each step either runs an AI agent with a specific skill or performs a direct infrastructure operation. Optional steps are marked.
 
 ```mermaid
 flowchart TD
@@ -24,14 +24,16 @@ flowchart TD
     INSTALL --> PLUGINS["4. Install Plugins"]
     PLUGINS --> THEME["5. Generate Theme"]
     THEME --> CONTENT["6. Create Content"]
-    CONTENT --> VALIDATE["7. Validate"]
-    VALIDATE -->|Pass| EXPORT["9. Export Bundle"]
-    VALIDATE -->|Fail| HEAL["8. Self-Heal"]
+    CONTENT --> REVIEW["7. Visual Review (optional)"]
+    REVIEW --> VALIDATE["8. Validate"]
+    VALIDATE -->|Pass| EXPORT["10. Export Bundle"]
+    VALIDATE -->|Fail| HEAL["9. Self-Heal (optional)"]
     HEAL --> VALIDATE2["Re-Validate"]
     VALIDATE2 -->|Pass| EXPORT
     VALIDATE2 -->|Fail, cycle < 2| HEAL
     VALIDATE2 -->|Fail, cycle = 2| REPORT["Build Report"]
-    EXPORT --> REPORT
+    EXPORT --> SUMMARY["11. Generate Summary"]
+    SUMMARY --> REPORT
 
     style EXTRACT fill:#e8d5f5
     style INSTALL fill:#e8d5f5
@@ -46,6 +48,28 @@ flowchart TD
 ```
 
 **Legend:** Purple = AI agent step, Blue = infrastructure step, Orange = validation, Green = export.
+
+---
+
+## Generating a New Website
+
+When you build from a prompt, LinoPress generates a brand new WordPress site from scratch:
+
+1. **Prompt to SiteSpec**: The LLM converts your prompt into a structured SiteSpec (pages, plugins, theme mode, style seed, business details).
+2. **Provisioning**: Docker containers, volumes, and configuration files are created for the new site ID.
+3. **WordPress installation**: Core installation, permalinks, locale, and security options are configured.
+4. **Theme + content**: A theme is generated/installed, pages are created with block markup, and menus/front page are configured.
+5. **Optional review**: If `--review` is enabled, screenshots are captured and a reviewer agent fixes any visual or functional issues.
+6. **Validation + healing**: Automated checks run; failures trigger self-healing cycles (if enabled).
+7. **Export + summary**: A portable bundle is created and a human-readable build summary is generated.
+
+Key inputs for a new site build:
+
+- `--prompt "..."` to generate a SiteSpec from text.
+- `--spec path/to/spec.json` to use a pre-built SiteSpec (skips prompt extraction).
+- `--browser` to enable browser-based validation and screenshots.
+- `--review` to enable visual review cycles.
+- `--no-heal` to skip self-healing if validation fails.
 
 ---
 
@@ -405,7 +429,33 @@ The page-builder skill instructs the agent to use WordPress block markup (Gutenb
 
 ---
 
-## Step 7: Validate
+## Step 7: Visual Review (Optional)
+
+**Type:** AI Agent step (only runs when `--review` is enabled)
+**Skill:** `site-reviewer`
+**Tools used:** `browser`, `wp_cli`, `file`
+
+The reviewer performs a pre-flight content check (missing pages, empty content, menu/front page config), captures screenshots, and asks the LLM to assess visual quality and fix issues. Review runs in cycles (default 2) and limits the number of screenshots to control context size (default 3 pages).
+
+```mermaid
+sequenceDiagram
+    participant O as Orchestrator
+    participant A as Agent Runtime
+    participant B as Browser
+    participant WP as wp_cli tool
+
+    O->>WP: verifyContent() pre-flight checks
+    O->>B: Capture page screenshots
+    O->>A: run(review prompt + images)
+    A->>WP: Fix content/menu/front-page issues
+    A->>WP: wp rewrite flush --hard
+```
+
+If the reviewer still finds issues, they are reported and can be addressed in subsequent cycles.
+
+---
+
+## Step 8: Validate
 
 **Type:** Direct infrastructure calls (no agent)
 **Source:** `src/build/orchestrator.ts` -> `buildValidation()`
@@ -459,7 +509,7 @@ Validation **passes** when all CLI checks succeed AND there are zero browser con
 
 ---
 
-## Step 8: Self-Heal (Conditional)
+## Step 9: Self-Heal (Conditional)
 
 **Type:** AI Agent step (only runs if validation failed and `--no-heal` was not set)
 **Skill:** `self-healing`
@@ -490,7 +540,7 @@ The self-healing skill classifies errors by type and applies targeted fixes:
 
 ---
 
-## Step 9: Export Bundle
+## Step 10: Export Bundle
 
 **Type:** Direct infrastructure call (no agent)
 **Source:** `src/tools/export-exec.ts` -> `createExportExecutor()`
@@ -551,6 +601,17 @@ site-motorcycle-shop_2026-02-17T11-30-00-000Z.tar.gz
   manifest.json
   screenshots/        (if browser validation captured any)
 ```
+
+---
+
+## Step 11: Generate Summary
+
+**Type:** AI Agent step (optional — skipped on hard failures)
+**Source:** `src/build/orchestrator.ts` -> `generateBuildSummary()`
+
+After the build completes, LinoPress generates a human-readable markdown summary. This includes a high-level description, pages created, design notes, technical details, and review notes (if visual review ran).
+
+The summary is printed to the CLI output and included in the `BuildReport.summary` field.
 
 ---
 
@@ -652,7 +713,7 @@ When the pipeline completes, a `BuildReport` is returned with:
 
 ```
 Build status: success
-Steps: 9/9 complete
+Steps: 11/11 complete
 ```
 
 The report includes:
@@ -665,6 +726,7 @@ The report includes:
 - **metadata** -- WordPress version, PHP version, active theme, installed plugins, total duration
 - **healingCycles[]** -- Details of any self-healing attempts
 - **export** -- Bundle path, size, manifest (if export succeeded)
+- **summary** -- Markdown summary (if generated)
 
 ---
 
@@ -680,11 +742,13 @@ For a typical build like our motorcycle shop, the approximate timeline looks lik
 18s   [install]   Agent installs WordPress (~20s, ~10 WP-CLI calls)
 38s   [plugins]   Agent installs plugins (~5s per plugin)
 43s   [theme]     Agent creates child theme (~15s, file writes + activation)
-58s   [content]   Agent creates pages + menus (~20s, ~8 WP-CLI calls)
-78s   [validate]  CLI checks + browser navigation (~10s)
-88s   [heal]      (skipped if validation passes)
-88s   [export]    Archive wp-content + DB, build bundle (~10s)
-98s   Done. BuildReport returned.
+ 58s   [content]   Agent creates pages + menus (~20s, ~8 WP-CLI calls)
+ 78s   [review]    Visual review with screenshots (~10s, optional)
+ 88s   [validate]  CLI checks + browser navigation (~10s)
+ 98s   [heal]      (skipped if validation passes)
+ 98s   [export]    Archive wp-content + DB, build bundle (~10s)
+108s   [summary]   Generate markdown summary (~2s)
+110s   Done. BuildReport returned.
 ```
 
 Total: ~90-120 seconds for a typical site with 4-6 pages.
@@ -696,7 +760,7 @@ Total: ~90-120 seconds for a typical site with 4-6 pages.
 | File                          | Role in build pipeline                                              |
 | ----------------------------- | ------------------------------------------------------------------- |
 | `src/cli.ts`                  | Entry point, argument parsing, dispatches to orchestrator           |
-| `src/build/orchestrator.ts`   | Pipeline controller, runs all 9 steps in sequence                   |
+| `src/build/orchestrator.ts`   | Pipeline controller, runs all 11 steps in sequence                  |
 | `src/agent/runtime.ts`        | Creates agent with middleware stack, LLM adapter, tools             |
 | `src/agent/tools.ts`          | Assembles toolset (wp_cli, file, browser, export), safeTool wrapper |
 | `src/stack/provision.ts`      | Docker stack creation (compose, env, volumes)                       |
@@ -713,6 +777,7 @@ Total: ~90-120 seconds for a typical site with 4-6 pages.
 | `skills/plugin-installer/`    | Skill: install and activate plugins                                 |
 | `skills/theme-generator/`     | Skill: create/install themes                                        |
 | `skills/page-builder/`        | Skill: create pages, posts, and menus                               |
+| `skills/site-reviewer/`       | Skill: visual QA and content fixes                                  |
 | `skills/site-validator/`      | Skill: validate site health                                         |
 | `skills/browser-smoke-test/`  | Skill: browser-based validation                                     |
 | `skills/self-healing/`        | Skill: diagnose and fix issues                                      |

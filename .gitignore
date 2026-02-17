@@ -8,3 +8,4 @@ tmp/
 exports/
 *.log
 .linopress/stacks/
+.agents/MEMORY.md
