@@ -1,6 +1,8 @@
 ---
 name: plugin-installer
 description: Install, activate, and manage curated WordPress plugins via wp-cli. Use when setting up plugins for a site.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Plugin Installer Skill

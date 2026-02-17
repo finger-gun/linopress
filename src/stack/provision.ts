@@ -57,21 +57,13 @@ export const provisionStack = async ({ siteId, port, browser = false }: Provisio
   await copyFile(NGINX_TEMPLATE, path.join(siteDir, 'nginx.conf'));
   await writeFile(envPath, envFileContents(siteId, port), 'utf8');
 
-  const args = [
-    'compose',
-    '-f',
-    composePath,
-    '--env-file',
-    envPath,
-    '-p',
-    projectName,
-  ];
+  const args = ['compose', '-f', composePath, '--env-file', envPath, '-p', projectName];
 
   if (browser) {
     args.push('--profile', 'browser');
   }
 
-  args.push('up', '-d');
+  args.push('up', '-d', '--build');
 
   await runDockerCompose(args);
 

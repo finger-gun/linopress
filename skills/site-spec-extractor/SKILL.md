@@ -1,6 +1,8 @@
 ---
 name: site-spec-extractor
 description: Extract a structured SiteSpec from a natural language prompt with defaults, validation, and curated plugins only.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Site Spec Extractor Skill

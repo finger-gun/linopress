@@ -1,6 +1,8 @@
 ---
 name: page-builder
 description: Create pages, posts, and menus using block markup via wp-cli. Use when assembling site content.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Page Builder Skill

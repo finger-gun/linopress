@@ -34,7 +34,12 @@ export const createToolset = ({
   }
 
   const wpCli = createWpCliTool(createWpCliExecutor({ siteId, timeoutMs }));
-  const file = createFileTool();
+  const baseFile = createFileTool();
+  const file: Tool = {
+    ...baseFile,
+    handler: async (input, ctx) =>
+      baseFile.handler({ ...input, siteId } as typeof input & { siteId: string }, ctx as never),
+  };
   const browser = createBrowserTool(
     createBrowserExecutor({
       siteId,

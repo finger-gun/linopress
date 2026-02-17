@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { posix as path } from 'node:path';
 import { z } from 'zod';
+import { runCommand } from './docker.js';
 
 const DEFAULT_ROOT = '/var/www/html/wp-content';
 const TEMP_ROOT = '/tmp/linopress';
@@ -20,10 +21,11 @@ const fileToolSchema = z.object({
     'temp_create',
     'temp_cleanup',
   ]),
+  siteId: z.string().min(1).optional(),
   path: z.string().min(1).optional(),
   source: z.string().min(1).optional(),
   destination: z.string().min(1).optional(),
-  data: z.string().optional(),
+  data: z.union([z.string(), z.record(z.string(), z.unknown()), z.array(z.unknown())]).optional(),
   encoding: z.enum(['utf8', 'base64']).optional(),
   recursive: z.boolean().optional(),
   pattern: z.string().optional(),
@@ -100,6 +102,28 @@ const ensureAllowedPath = (input: string) => {
   return resolved;
 };
 
+const resolveContainerName = (siteId: string) => `linopress_${siteId}-wordpress-1`;
+
+const resolveRunningWordpressContainer = async (): Promise<string | null> => {
+  const result = await runCommand('docker', ['ps', '--format', '{{.Names}}'], 10_000);
+  if (result.exitCode !== 0) return null;
+  const names = result.stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const matches = names.filter((name) => /^linopress_.+-wordpress-1$/.test(name));
+  if (matches.length === 1) return matches[0];
+  return null;
+};
+
+const runDocker = async (args: string[]) => {
+  const result = await runCommand('docker', args, 60_000);
+  if (result.exitCode !== 0) {
+    throw new Error(result.stderr || result.stdout || 'docker command failed');
+  }
+  return result;
+};
+
 const ensureDirPermissions = async (dirPath: string) => {
   await fs.chmod(dirPath, 0o755);
 };
@@ -164,6 +188,21 @@ const readFile = async (
   return { status: 'ok', data, encoding };
 };
 
+const readFileInContainer = async (
+  container: string,
+  targetPath: string,
+  encoding: 'utf8' | 'base64',
+): Promise<FileToolResult> => {
+  const result = await runCommand('docker', ['exec', container, 'cat', targetPath], 60_000);
+  if (result.exitCode !== 0) {
+    throw new Error(result.stderr || result.stdout || 'docker exec cat failed');
+  }
+  if (encoding === 'base64') {
+    return { status: 'ok', data: Buffer.from(result.stdout, 'utf8').toString('base64'), encoding };
+  }
+  return { status: 'ok', data: result.stdout, encoding };
+};
+
 const writeFileAtomic = async (
   targetPath: string,
   data: string,
@@ -189,6 +228,28 @@ const writeFileAtomic = async (
 
     return { status: 'ok' };
   });
+
+const writeFileInContainer = async (
+  container: string,
+  targetPath: string,
+  data: string,
+  encoding: 'utf8' | 'base64',
+): Promise<FileToolResult> => {
+  await ensureTempRoot();
+  const tempPath = path.join(TEMP_ROOT, `linopress-file-${randomUUID()}`);
+  if (encoding === 'base64') {
+    await fs.writeFile(tempPath, Buffer.from(data, 'base64'));
+  } else {
+    await fs.writeFile(tempPath, data, 'utf8');
+  }
+
+  const dir = path.dirname(targetPath);
+  await runDocker(['exec', container, 'mkdir', '-p', dir]);
+  await runDocker(['cp', tempPath, `${container}:${targetPath}`]);
+  await runDocker(['exec', container, 'chmod', '644', targetPath]);
+  await fs.rm(tempPath, { force: true });
+  return { status: 'ok' };
+};
 
 const copyFileSafe = async (sourcePath: string, destinationPath: string): Promise<FileToolResult> =>
   withFileLock(destinationPath, async () => {
@@ -278,13 +339,42 @@ export const createFileTool = (): Tool<FileToolInput> => ({
       case 'read': {
         if (!input.path) throw new Error('read operation requires path');
         const targetPath = ensureAllowedPath(input.path);
+        if (isWithinRoot(targetPath, DEFAULT_ROOT)) {
+          const siteId = input.siteId || process.env.LINOPRESS_SITE_ID || undefined;
+          const container = siteId
+            ? resolveContainerName(siteId)
+            : await resolveRunningWordpressContainer();
+          if (container) {
+            return readFileInContainer(container, targetPath, encoding);
+          }
+        }
         return readFile(targetPath, encoding);
       }
       case 'write': {
         if (!input.path) throw new Error('write operation requires path');
         if (input.data === undefined) throw new Error('write operation requires data');
         const targetPath = ensureAllowedPath(input.path);
-        return writeFileAtomic(targetPath, input.data, encoding);
+        const siteId = input.siteId || process.env.LINOPRESS_SITE_ID || undefined;
+        const data =
+          typeof input.data === 'string' ? input.data : JSON.stringify(input.data, null, 2);
+        if (isWithinRoot(targetPath, DEFAULT_ROOT)) {
+          const container = siteId
+            ? resolveContainerName(siteId)
+            : await resolveRunningWordpressContainer();
+          if (container) {
+            return writeFileInContainer(container, targetPath, data, encoding);
+          }
+          try {
+            return await writeFileAtomic(targetPath, data, encoding);
+          } catch (error) {
+            const fallbackContainer = await resolveRunningWordpressContainer();
+            if (fallbackContainer) {
+              return writeFileInContainer(fallbackContainer, targetPath, data, encoding);
+            }
+            throw error;
+          }
+        }
+        return writeFileAtomic(targetPath, data, encoding);
       }
       case 'copy': {
         if (!input.source || !input.destination) {
@@ -316,7 +406,13 @@ export const createFileTool = (): Tool<FileToolInput> => ({
         return existsPath(targetPath);
       }
       case 'temp_create': {
-        return createTempFile(input.data, encoding, input.prefix, input.ext);
+        const data =
+          typeof input.data === 'string'
+            ? input.data
+            : input.data === undefined
+              ? undefined
+              : JSON.stringify(input.data, null, 2);
+        return createTempFile(data, encoding, input.prefix, input.ext);
       }
       case 'temp_cleanup': {
         return cleanupTempFiles();

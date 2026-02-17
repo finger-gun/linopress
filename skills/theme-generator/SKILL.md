@@ -1,6 +1,8 @@
 ---
 name: theme-generator
 description: Generate or activate a WordPress theme (parent+child, blank block, or user-selected). Use when configuring site theming.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Theme Generator Skill
@@ -68,3 +70,14 @@ Create or activate a theme based on the selected mode, using wp-cli and restrict
 ## Notes
 
 - Theme files are written via the file tool (restricted to wp-content).
+- When calling the file tool with operation=write, ALWAYS include the file contents in the data field.
+
+Example:
+
+```json
+{
+  "operation": "write",
+  "path": "/var/www/html/wp-content/themes/child-theme/style.css",
+  "data": "/* Theme Name: Child */"
+}
+```

@@ -5,10 +5,12 @@ import { openAIAdapter } from '@sisu-ai/adapter-openai';
 import { inputToMessage, conversationBuffer } from '@sisu-ai/mw-conversation-buffer';
 import { registerTools } from '@sisu-ai/mw-register-tools';
 import { skillsMiddleware } from '@sisu-ai/mw-skills';
-import { toolCalling } from '@sisu-ai/mw-tool-calling';
+import { iterativeToolCalling } from '@sisu-ai/mw-tool-calling';
 import { traceViewer } from '@sisu-ai/mw-trace-viewer';
 import { DEFAULT_TOOL_ALLOWLIST, createToolset, type ToolName } from './tools.js';
 import { ensureBuildState, recordBuildError } from './state.js';
+import { validateSkillsCompatibility } from './skill-compat.js';
+import { linopressVersion } from '../version.js';
 
 export type LlmProvider = 'openai' | 'anthropic';
 
@@ -29,18 +31,35 @@ export type AgentRuntimeOptions = {
 const DEFAULT_SYSTEM_PROMPT =
   'You are Linopress, an agentic WordPress automation system. Use skills and tools to build sites deterministically.';
 
-const resolveProvider = (value?: string): LlmProvider => {
-  const normalized = (value ?? '').toLowerCase();
+const resolveProvider = (providerValue?: string, modelValue?: string): LlmProvider => {
+  const normalized = (providerValue ?? '').toLowerCase();
   if (normalized === 'anthropic' || normalized === 'claude') return 'anthropic';
   if (normalized === 'openai' || normalized === 'gpt') return 'openai';
+
+  if (process.env.BASE_URL) return 'openai';
+
+  const model = (modelValue ?? '').toLowerCase();
+  if (model.startsWith('gpt') || model.startsWith('o1') || model.startsWith('o3')) return 'openai';
+  if (model.startsWith('claude')) return 'anthropic';
   return 'anthropic';
 };
 
+const resolveApiKey = (provider: LlmProvider) => {
+  if (process.env.API_KEY) return process.env.API_KEY;
+  return provider === 'openai' ? process.env.OPENAI_API_KEY : process.env.ANTHROPIC_API_KEY;
+};
+
 const resolveModel = (provider: LlmProvider, model?: string) => {
+  const resolvedModel = model ?? process.env.MODEL ?? process.env.LLM_MODEL;
+  const apiKey = resolveApiKey(provider);
   if (provider === 'openai') {
-    return openAIAdapter({ model: model ?? process.env.LLM_MODEL ?? 'gpt-4o-mini' });
+    return openAIAdapter({
+      model: resolvedModel ?? 'gpt-4o-mini',
+      apiKey,
+      baseUrl: process.env.BASE_URL,
+    });
   }
-  return anthropicAdapter({ model: model ?? process.env.LLM_MODEL ?? 'claude-3-5-sonnet' });
+  return anthropicAdapter({ model: resolvedModel ?? 'claude-3-5-sonnet', apiKey });
 };
 
 const withTimeout = (timeoutMs?: number) => async (ctx: unknown, next: () => Promise<void>) => {
@@ -136,7 +155,11 @@ const registerShutdownHandlers = (controller: AbortController) => {
 };
 
 export const createAgentRuntime = (options: AgentRuntimeOptions) => {
-  const provider = options.modelProvider ?? resolveProvider(process.env.LLM_PROVIDER);
+  if (!process.env.LINOPRESS_SITE_ID) {
+    process.env.LINOPRESS_SITE_ID = options.siteId;
+  }
+  const provider =
+    options.modelProvider ?? resolveProvider(process.env.LLM_PROVIDER, options.model);
   const model = resolveModel(provider, options.model);
   const toolAllowlist = options.toolAllowlist ?? [...DEFAULT_TOOL_ALLOWLIST];
   const tools =
@@ -165,10 +188,18 @@ export const createAgentRuntime = (options: AgentRuntimeOptions) => {
     .use(inputToMessage)
     .use(conversationBuffer({ window: options.conversationWindow ?? 8 }))
     .use(withTimeout(options.skillTimeoutMs))
-    .use(toolCalling);
+    .use(iterativeToolCalling);
 
   const controller = new AbortController();
   registerShutdownHandlers(controller);
+
+  const skillWarnings = validateSkillsCompatibility(
+    options.skillsDir ?? 'skills',
+    linopressVersion,
+  );
+  for (const warning of skillWarnings) {
+    console.warn(`[skill-compat] ${warning}`);
+  }
 
   const createContext = (input: string, systemPrompt?: string) =>
     createCtx({

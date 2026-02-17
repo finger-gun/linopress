@@ -1,6 +1,8 @@
 ---
 name: site-validator
 description: Validate WordPress site health (DB, filesystem, content, URLs, admin) and return structured ValidationResult. Use before export and self-healing.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Site Validator Skill

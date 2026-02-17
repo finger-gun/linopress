@@ -260,7 +260,7 @@
 - [x] 17.10 Implement tool allowlist enforcement
 - [x] 17.11 Add graceful shutdown handling
 - [x] 17.12 Implement concurrent skill execution where safe
-- [ ] 17.13 Add skill versioning and compatibility checks
+- [x] 17.13 Add skill versioning and compatibility checks
 
 ## 18. Build Orchestration and Main Flow
 
@@ -288,18 +288,18 @@
 
 - [x] 20.1 Write unit tests for all tool wrappers
 - [x] 20.2 Write unit tests for all skills
-- [ ] 20.3 Create integration test for full build flow
-- [ ] 20.4 Test per-site isolation with concurrent builds
+- [x] 20.3 Create integration test for full build flow
+- [x] 20.4 Test per-site isolation with concurrent builds
 - [x] 20.5 Validate tool allowlists prevent unauthorized operations
-- [ ] 20.6 Test self-healing with various failure scenarios
-- [ ] 20.7 Test export bundle creation and restoration
+- [x] 20.6 Test self-healing with various failure scenarios
+- [x] 20.7 Test export bundle creation and restoration
 - [x] 20.8 Verify security model (filesystem restrictions, command allowlisting)
-- [ ] 20.9 Test browser automation and screenshot capture
+- [x] 20.9 Test browser automation and screenshot capture
 - [x] 20.10 Validate BuildReport completeness
 
 ## 21. End-to-End Demo Implementation
 
-- [ ] 21.1 Create yoga studio SiteSpec with full requirements
+- [x] 21.1 Create yoga studio SiteSpec with full requirements
 - [ ] 21.2 Run end-to-end build: provision → extract → install → theme → content → validate → export
 - [ ] 21.3 Verify all pages created correctly (home, about, pricing, schedule, testimonials, contact)
 - [ ] 21.4 Validate CLI checks pass (database, filesystem, health)

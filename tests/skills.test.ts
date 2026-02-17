@@ -24,5 +24,7 @@ test('skills have basic frontmatter', async () => {
     assert.ok(frontmatter, `Missing frontmatter in ${dir}`);
     assert.ok(/name:\s*\S+/.test(frontmatter ?? ''), `Missing name in ${dir}`);
     assert.ok(/description:\s*\S+/.test(frontmatter ?? ''), `Missing description in ${dir}`);
+    assert.ok(/version:\s*\S+/.test(frontmatter ?? ''), `Missing version in ${dir}`);
+    assert.ok(/minRuntime:\s*\S+/.test(frontmatter ?? ''), `Missing minRuntime in ${dir}`);
   }
 });

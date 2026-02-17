@@ -1,6 +1,8 @@
 ---
 name: browser-smoke-test
 description: Run headless browser smoke tests (pages, screenshots, console/network errors, performance, accessibility). Use after build or before export.
+version: 0.1.0
+minRuntime: 0.1.0
 ---
 
 # Browser Smoke Test Skill

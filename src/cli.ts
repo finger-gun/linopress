@@ -171,6 +171,17 @@ const main = async () => {
     console.log(
       `Steps: ${report.steps.filter((step) => step.status === 'success').length}/${report.steps.length} complete`,
     );
+    if (report.status !== 'success') {
+      const failedSteps = report.steps
+        .filter((step) => step.status === 'failed')
+        .map((step) => step.id);
+      if (failedSteps.length) {
+        console.log(`Failed steps: ${failedSteps.join(', ')}`);
+      }
+      console.log(
+        `Validation: db=${report.validation.cli.databaseOk} fs=${report.validation.cli.filesystemOk} health=${report.validation.cli.healthCheckOk} browserErrors=${report.validation.browser.consoleErrors.length}`,
+      );
+    }
     if (report.errors?.length) {
       console.log('Errors:');
       for (const err of report.errors) {
