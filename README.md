@@ -1,6 +1,6 @@
 # Linopress
 
-![LinoPress](./assets/linopress-logo.png)
+![LinoPress](./assets/linopress-logotype.svg)
 
 Linopress is an **agentic automation layer for WordPress**: describe a site in natural language, and the system plans, builds, validates, repairs, and exports it through deterministic tooling.
 
@@ -134,7 +134,6 @@ Landing page files live in:
 
 - `landingpage/index.html`
 - `landingpage/styles.css`
-- `landingpage/assets/linopress-logo.png`
 
 Local preview:
 
