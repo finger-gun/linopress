@@ -55,9 +55,22 @@ export type WpCliResult = {
 
 export type WpCliExecutor = (input: WpCliInput) => Promise<WpCliResult>;
 
+// LLMs sometimes pass args as a single string instead of an array.
+// Coerce to array before validation so the tool doesn't reject valid intent.
+const coerceArgs = z.preprocess(
+  (val) => {
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      return trimmed.length > 0 ? trimmed.split(/\s+/) : undefined;
+    }
+    return val;
+  },
+  z.array(z.string().min(1)).optional(),
+);
+
 const wpCliSchema = z.object({
   command: z.string().min(1),
-  args: z.array(z.string().min(1)).optional(),
+  args: coerceArgs,
 });
 
 const matchesAllowlist = (command: string, allowlist: readonly string[]) =>
