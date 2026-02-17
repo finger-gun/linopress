@@ -83,6 +83,7 @@ const errorRecorder =
     }
   };
 
+// Prevent accidental recursive skill invocation loops.
 const guardSkillCycles = () => async (ctx: any, next: () => Promise<void>) => {
   const tools = ctx?.tools as {
     get?: (name: string) => Tool | undefined;

@@ -89,6 +89,7 @@ const getAssistantText = (ctx: any) => {
   return '';
 };
 
+// Uses the LLM skill to return a validated SiteSpec extraction JSON.
 const extractSiteSpecFromPrompt = async (
   runtimeOptions: AgentRuntimeOptions,
   prompt: string,
@@ -209,6 +210,7 @@ const runBrowserValidation = async (siteId: string, urls: string[]) => {
   return { pagesLoaded, consoleErrors, screenshotsCaptured: screenshots.length, screenshots };
 };
 
+// Runs CLI validation and optional browser smoke checks.
 const buildValidation = async (
   siteId: string,
   baseUrl: string,
@@ -297,6 +299,7 @@ const runWithTimeout = async <T>(promise: Promise<T>, timeoutMs?: number) => {
   }
 };
 
+// Orchestrates full build flow using skills and allowlisted tools.
 export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildReport> => {
   const startedAt = new Date().toISOString();
   const errors: ErrorLog[] = [];

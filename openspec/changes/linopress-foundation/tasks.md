@@ -319,6 +319,6 @@
 - [x] 22.5 Write guide for adding new skills
 - [x] 22.6 Document style seed format and examples
 - [x] 22.7 Create BuildReport schema documentation
-- [ ] 22.8 Add inline code comments and JSDoc
+- [x] 22.8 Add inline code comments and JSDoc
 - [x] 22.9 Create architecture diagram
 - [x] 22.10 Write deployment guide for exported sites
