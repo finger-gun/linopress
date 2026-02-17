@@ -1,6 +1,6 @@
 # Linopress
 
-![LinoPress](./assets/linopress-logo.png)
+![LinoPress](./assets/linopress-logotype.svg)
 
 Linopress is an **agentic automation layer for WordPress**: describe a site in natural language, and the system plans, builds, validates, repairs, and exports it through deterministic tooling.
 
@@ -127,6 +127,21 @@ node dist/cli.js provision yoga-studio --port 8080 --browser
 See `docs/developer-guide.md` for stack layout, workflows, and troubleshooting.
 
 Agent context: `AGENT.md`.
+
+## Marketing landing page (temporary)
+
+Landing page files live in:
+
+- `landingpage/index.html`
+- `landingpage/styles.css`
+
+Local preview:
+
+```bash
+python3 -m http.server 4173 --directory landingpage
+```
+
+Then open `http://127.0.0.1:4173` in your browser.
 
 ## Repository layout
 

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linopress — Prompt to WordPress, Verified</title>
+  <meta name="description"
+    content="Linopress is an upcoming deterministic automation layer for WordPress: prompt, build, verify, self-heal, and export." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="grain"></div>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="./index.html" aria-label="Linopress home">
+        <img class="brand-wordmark-image" src="./assets/linopress-logotype-white.svg" alt="Linopress" width="72"
+          height="72" />
+      </a>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-content">
+        <div class="badge">
+          <span class="badge-dot"></span>
+          Coming soon
+        </div>
+        <h1>
+          <span class="hero-line">Prompt in your browser.</span>
+          <span class="hero-line hero-gradient">WordPress automated.</span>
+        </h1>
+        <p class="hero-sub">
+          Describe your site in a web prompt composer. Linopress then builds,
+          verifies, self-heals, and exports it—deterministically.
+          Browser-native workflow. No surprises.
+        </p>
+        <div class="hero-actions">
+          <a href="#cta" class="btn btn-primary">
+            <span>Request early access</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3.33 8h9.34M9 4.33 12.67 8 9 11.67" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+          <a href="#how-it-works" class="btn btn-ghost">See how it works</a>
+        </div>
+      </div>
+
+      <!-- Prompt composer visual -->
+      <div class="hero-visual">
+        <div class="prompt-panel" aria-label="Prompt composer preview" role="img">
+          <div class="prompt-bar" aria-hidden="true">
+            <span class="prompt-dot"></span>
+            <span class="prompt-dot"></span>
+            <span class="prompt-dot"></span>
+            <span class="prompt-url">app.linopress.dev / new-site</span>
+          </div>
+          <div class="prompt-body">
+            <div class="prompt-label">Site brief</div>
+            <div class="prompt-textarea" aria-live="polite">
+              <span class="prompt-text" id="hero-prompt-example-text">Build a premium yoga studio site with classes,
+                memberships, and instructor bios. Keep it fast, accessible, and conversion-focused.</span>
+              <span class="prompt-swoosh" aria-hidden="true"></span>
+            </div>
+
+            <div class="prompt-actions" aria-hidden="true">
+              <div class="btn btn-ghost prompt-static-btn">Preview plan</div>
+              <div class="btn btn-primary prompt-static-btn">Generate site</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+      <div class="section-header">
+        <span class="section-tag">Capabilities</span>
+        <h2>Built for reliability,<br />not just convenience</h2>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2v4m0 12v4M2 12h4m12 0h4m-4.93-7.07 2.83-2.83M5.1 18.9l2.83-2.83m0-8.14L5.1 5.1m13.8 13.8-2.83-2.83"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </div>
+          <h3>Deterministic execution</h3>
+          <p>Every state change flows through allowlisted tools. Same input, same output—always.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.5" />
+              <path d="M3 9h18M9 21V9" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </div>
+          <h3>One site, one sandbox</h3>
+          <p>Isolated WordPress + DB runtime per project. No cross-contamination. Clean separation.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </div>
+          <h3>Verification first</h3>
+          <p>CLI validation + browser smoke tests on every build. Ship only what passes.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4 12h.01M8 12h.01M12 12h.01M16 12h.01M20 12h.01" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" />
+              <path d="M4 7h16M4 17h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </div>
+          <h3>Bounded self-healing</h3>
+          <p>When things break, repairs are automatic—but limited to 2 cycles. No infinite loops.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M21 8v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8m18 0-9 6-9-6m18 0a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>Portable exports</h3>
+          <p>Get a clean bundle: wp-content, database dump, manifest. Deploy anywhere.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>Skill-driven workflow</h3>
+          <p>wp-install, plugin-installer, theme-generator, page-builder—composable building blocks.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="flow" id="how-it-works">
+      <div class="section-header">
+        <span class="section-tag">Workflow</span>
+        <h2>Five steps.<br />Zero guesswork.</h2>
+      </div>
+
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number">01</div>
+          <div class="step-content">
+            <h3>Prompt</h3>
+            <p>Define your site in natural language or structured spec. Intent in, magic out.</p>
+          </div>
+        </div>
+
+        <div class="flow-connector"></div>
+
+        <div class="flow-step">
+          <div class="step-number">02</div>
+          <div class="step-content">
+            <h3>Build</h3>
+            <p>Agent executes through allowlisted tools only. WordPress, themes, plugins, pages—assembled.</p>
+          </div>
+        </div>
+
+        <div class="flow-connector"></div>
+
+        <div class="flow-step">
+          <div class="step-number">03</div>
+          <div class="step-content">
+            <h3>Verify</h3>
+            <p>CLI checks + real browser tests confirm the build matches expectations.</p>
+          </div>
+        </div>
+
+        <div class="flow-connector"></div>
+
+        <div class="flow-step">
+          <div class="step-number">04</div>
+          <div class="step-content">
+            <h3>Self-heal</h3>
+            <p>If verification fails, bounded repair cycles attempt recovery. Clear build report either way.</p>
+          </div>
+        </div>
+
+        <div class="flow-connector"></div>
+
+        <div class="flow-step">
+          <div class="step-number">05</div>
+          <div class="step-content">
+            <h3>Export</h3>
+            <p>Portable bundle ready for deployment. No vendor lock-in.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRUST -->
+    <section class="trust">
+      <div class="trust-content">
+        <div class="trust-badge">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 1.667l-7.5 3.75v5c0 4.584 3.2 8.875 7.5 9.916 4.3-1.041 7.5-5.332 7.5-9.916v-5L10 1.667z"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M7.5 10l1.667 1.667L12.5 8.333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Trust by design
+        </div>
+        <h2>Constrained for your protection</h2>
+        <p>
+          Linopress doesn't run arbitrary code. Every operation is allowlisted.
+          Browser navigation is restricted to local WordPress URLs.
+          No Docker socket exposure. No secrets in model output.
+          <strong>Controlled execution, not magic.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" id="cta">
+      <div class="cta-content">
+        <h2>Ship WordPress sites<br />with confidence.</h2>
+        <p>Join the early access list. Be first to automate your WordPress workflow.</p>
+        <a href="mailto:hello@linopress.dev?subject=Linopress%20early%20access" class="btn btn-primary btn-large">
+          <span>Request early access</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3.33 8h9.34M9 4.33 12.67 8 9 11.67" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <img class="footer-wordmark-image" src="./assets/linopress-logotype-white.svg" alt="Linopress" />
+      </div>
+      <p class="footer-tagline">Agentic automation for WordPress.</p>
+    </div>
+  </footer>
+
+  <script>
+    (() => {
+      const promptTextEl = document.getElementById('hero-prompt-example-text');
+      if (!promptTextEl) return;
+      const promptBoxEl = promptTextEl.closest('.prompt-textarea');
+      if (!promptBoxEl) return;
+
+      // Curated prompt examples for the landing page hero.
+      // Deterministic, ordered list with no external data dependency.
+      const promptExamples = [
+        {
+          text: 'Build a premium yoga studio site with classes, memberships, and instructor bios. Keep it fast, accessible, and conversion-focused.',
+          tone: 'aqua'
+        },
+        {
+          text: 'Create a minimalist portfolio for a wedding photographer with galleries, pricing, testimonials, and inquiry forms.',
+          tone: 'violet'
+        },
+        {
+          text: 'Generate a modern local bakery website with seasonal menus, online pre-orders, and pickup information.',
+          tone: 'amber'
+        },
+        {
+          text: 'Design a consulting agency site with service pages, case studies, lead magnets, and calendly-style booking CTA.',
+          tone: 'rose'
+        },
+        {
+          text: 'Create a personal blog for a software engineer with article categories, newsletter signup, and a clean dark theme.',
+          tone: 'mint'
+        },
+        {
+          text: 'Build a nonprofit homepage with mission highlights, donation flow, volunteer signup, and upcoming events.',
+          tone: 'sky'
+        }
+      ];
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const rotationIntervalMs = 4200;
+      let currentIndex = 0;
+
+      promptTextEl.textContent = promptExamples[currentIndex].text;
+      promptBoxEl.dataset.tone = promptExamples[currentIndex].tone;
+
+      if (reduceMotion || promptExamples.length < 2) {
+        promptTextEl.classList.add('reduced-motion');
+        return;
+      }
+
+      let isAnimating = false;
+
+      const rotatePrompt = () => {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        promptTextEl.classList.add('is-transitioning');
+        promptBoxEl.classList.add('is-swooshing');
+
+        window.setTimeout(() => {
+          currentIndex = (currentIndex + 1) % promptExamples.length;
+          promptTextEl.textContent = promptExamples[currentIndex].text;
+          promptBoxEl.dataset.tone = promptExamples[currentIndex].tone;
+          promptTextEl.classList.remove('is-transitioning');
+        }, 210);
+
+        window.setTimeout(() => {
+          promptBoxEl.classList.remove('is-swooshing');
+          isAnimating = false;
+        }, 620);
+      };
+
+      window.setInterval(rotatePrompt, rotationIntervalMs);
+    })();
+  </script>
+</body>
+
+</html>
