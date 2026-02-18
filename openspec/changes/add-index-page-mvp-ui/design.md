@@ -82,8 +82,14 @@ IndexPage (app/src/app/page.tsx)
    - URL allowlist behavior: unchanged. No external navigation or browser policy changes are introduced.
 
 11. **Self-healing loop and fallback policies**
-   - Self-healing loop: unchanged for platform behavior (max bounded repair cycles as defined by system).
-   - Fallback policies: not triggered/extended by this UI change; existing platform fallback behavior (including theme/path fallbacks) remains intact.
+    - Self-healing loop: unchanged for platform behavior (max bounded repair cycles as defined by system).
+    - Fallback policies: not triggered/extended by this UI change; existing platform fallback behavior (including theme/path fallbacks) remains intact.
+
+12. **Prompt textarea autosizing within line bounds**
+    - Decision: implement client-side textarea autosizing that recalculates height from content and constrains effective height between configurable minimum and maximum line counts.
+    - Rationale: preserves the integrated composer appearance while improving typing ergonomics for short and long prompts.
+    - Defaults: `minLines = 1` and `maxLines = 10` when not explicitly provided.
+    - Behavior at max: once content height reaches the max-line cap, textarea uses internal vertical scrolling for overflow.
 
 ## Risks / Trade-offs
 

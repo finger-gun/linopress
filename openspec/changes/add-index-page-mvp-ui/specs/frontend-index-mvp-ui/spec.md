@@ -78,3 +78,9 @@ The prompt window SHALL present the textarea as an integrated part of the compos
 - **THEN** the submit control enters a transient loading state with animated gradient motion feedback
 - **AND** the loading state exits automatically after a short duration without backend requests
 - **AND** the control remains keyboard-focusable with accessible naming preserved
+
+#### Scenario: Prompt textarea auto-resizes within configurable line bounds
+- **WHEN** a user types multiline content in the prompt textarea
+- **THEN** the textarea automatically grows to fit content height while the rendered line count remains between configured minimum and maximum line bounds
+- **AND** default behavior uses a minimum of 1 line and a maximum of 10 lines when bounds are not explicitly configured
+- **AND** once the maximum line bound is reached, additional content is accommodated via internal textarea scrolling

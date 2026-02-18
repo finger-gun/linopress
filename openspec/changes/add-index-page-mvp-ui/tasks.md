@@ -19,6 +19,7 @@
 - [x] 3.6 Update prompt action controls to icon-based circular buttons (`+` attachment, arrow submit) with gradient emphasis on submit and solid styling on attachment.
 - [x] 3.7 Add local submit-button loading feedback with animated gradient motion on click while keeping interaction UI-only (no backend/network call).
 - [x] 3.8 Remove hover position shift from prompt action buttons while retaining non-positional visual hover feedback.
+- [x] 3.9 Add prompt textarea autosizing that grows with content between configurable min/max line bounds (defaults: min 1, max 10).
 
 ## 4. Reusable component refactor
 
