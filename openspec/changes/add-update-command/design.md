@@ -4,7 +4,7 @@ The current `linopress build` flow creates a fresh WordPress site in an isolated
 
 Component diagram (text):
 
-CLI (`linopress update`) → Agent API (Sisu runtime) → Update Orchestrator → Skills/Tools (page-builder, theme-generator, wp-cli, file-tool) → Validation (site-validator + browser-tool) → Report + Export
+CLI (`linopress update`) → Agent API (Sisu runtime + control-flow) → Analyze → Plan → Apply → Review loop → Validation (site-validator + browser-tool) → Report + Export
 
 ## Goals / Non-Goals
 
@@ -28,8 +28,8 @@ CLI (`linopress update`) → Agent API (Sisu runtime) → Update Orchestrator �
    - Alternatives considered: `linopress modify` (less consistent with other commands) and a `build --update` flag (blurs lifecycle stages).
 
 2. **Update execution model**
-   - Decision: implement an Update Orchestrator that mirrors build orchestration but starts from an existing site stack and runs a constrained set of skills/tools to apply changes.
-   - Rationale: reuse proven pipeline steps (validation, self-healing, reporting) while limiting scope to incremental updates.
+   - Decision: split update execution into explicit phases (analyze → plan → apply), followed by an optional review loop before validation.
+   - Rationale: avoid no-op runs by requiring a concrete plan and at least one write, while keeping steps observable and testable.
    - Alternatives considered: re-run full build from the original prompt (wastes time and discards user edits).
 
 3. **Data models (implementation-ready for Node/TS + Sisu)**
@@ -74,10 +74,11 @@ CLI (`linopress update`) → Agent API (Sisu runtime) → Update Orchestrator �
 
 5. **Self-healing loop and fallback policies**
    - Decision: reuse the existing validation + self-healing loop (max 2 cycles) for updates.
-   - Fallbacks: if update validation fails and theme changes are implicated, attempt a theme fallback from blank block theme to parent theme before the final failure report.
+   - Fallbacks: if the update apply phase detects a template-driven homepage with empty post content, prefer deterministic file edits (theme.json or template file) before reporting no-change.
 
 ## Risks / Trade-offs
 
 - Update drift reduces reproducibility → record update prompt and inputs in BuildReport and export manifest; keep update allowlists tight.
 - Change scope ambiguity in natural-language prompts → constrain to allowed tools and run validation + browser smoke tests after each update.
+- Multi-phase orchestration increases complexity → use control-flow middleware to keep steps explicit and debuggable.
 - Theme fallback could mask deeper issues → include explicit report notes when fallback occurs so users can decide to retry or rebuild.

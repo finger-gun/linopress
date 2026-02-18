@@ -13,7 +13,7 @@ const NGINX_TEMPLATE = path.resolve(process.cwd(), 'docker', 'nginx.conf');
 
 const SITE_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
-const assertSiteId = (siteId: string) => {
+export const assertSiteId = (siteId: string) => {
   if (!SITE_ID_PATTERN.test(siteId)) {
     throw new Error(
       'Invalid siteId. Use only letters, numbers, dashes, or underscores (e.g. yoga-studio-01).',

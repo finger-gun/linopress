@@ -43,12 +43,30 @@ The system MUST restrict update execution to allowlisted tools and skills only.
 
 ### Requirement: Update orchestration and validation
 
-The system SHALL orchestrate an update pipeline that applies the change prompt, then runs CLI validation and browser smoke tests.
+The system SHALL orchestrate an update pipeline with explicit analyze → plan → apply phases before validation.
 
 #### Scenario: Successful update validation
 
 - **WHEN** the update prompt is applied and both validation steps pass
 - **THEN** the system marks the update successful and produces a report
+
+### Requirement: Update apply must write or fail
+
+The system SHALL require at least one write operation during the apply phase.
+
+#### Scenario: No write operations performed
+
+- **WHEN** the update apply phase performs no writes
+- **THEN** the system reports a failure with a no-change error and does not claim the update succeeded
+
+### Requirement: Deterministic fallback for template-driven homepages
+
+The system SHALL fall back to deterministic edits when the homepage content is empty but template files exist.
+
+#### Scenario: Template-driven homepage
+
+- **WHEN** the homepage post content is empty and templates are present
+- **THEN** the system prefers editing theme.json or a template file to apply the requested change
 
 ### Requirement: Update self-healing loop
 

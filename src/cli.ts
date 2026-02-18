@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
-import { provisionStack } from './stack/provision.js';
+import { provisionStack, assertSiteId } from './stack/provision.js';
 import { destroyStack, startStack, stopStack } from './stack/lifecycle.js';
+import { assertStackExists, listStacks } from './stack/compose.js';
 import { buildFromInput } from './build/orchestrator.js';
+import { updateFromInput } from './update/orchestrator.js';
 
 type ParsedArgs = {
   siteId?: string;
@@ -26,7 +28,26 @@ type ParsedArgs = {
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--review] [--no-review] [--no-heal] [--yolo] [--timeout ms] [--skill-timeout ms] [--review-cycles N] [--max-review-pages N] [--heal-cycles N]\n`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--review] [--no-review] [--no-heal] [--yolo] [--timeout ms] [--skill-timeout ms] [--review-cycles N] [--max-review-pages N] [--heal-cycles N]\n  linopress update [--site <site-id>] --prompt "..." [--base-url http://localhost:8080] [--browser] [--no-browser] [--review] [--no-review] [--timeout ms] [--skill-timeout ms] [--review-cycles N]\n\nExamples:\n  linopress update --prompt "Change the background to white"\n  linopress update --site yoga-studio --prompt "Center the navigation"\n`,
+  );
+};
+
+const resolveUpdateSiteId = async (requested?: string) => {
+  if (requested) {
+    assertSiteId(requested);
+    await assertStackExists(requested);
+    return requested;
+  }
+
+  const stacks = await listStacks();
+  if (stacks.length === 1) {
+    return stacks[0];
+  }
+  if (stacks.length === 0) {
+    throw new Error('No stacks found. Provide --site or run linopress provision/build first.');
+  }
+  throw new Error(
+    `Multiple stacks found (${stacks.join(', ')}). Provide --site to select a target.`,
   );
 };
 
@@ -159,6 +180,60 @@ const main = async () => {
   if (!command || parsed.help) {
     printUsage();
     process.exit(command ? 0 : 1);
+  }
+
+  if (command === 'update') {
+    if (!parsed.prompt) {
+      console.error('Update requires --prompt.');
+      process.exit(1);
+    }
+
+    let siteId: string;
+    try {
+      siteId = await resolveUpdateSiteId(parsed.siteId);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+
+    const report = await updateFromInput({
+      siteId,
+      prompt: parsed.prompt,
+      baseUrl: parsed.baseUrl,
+      enableBrowser: parsed.noBrowser ? false : (parsed.browser ?? false),
+      enableHealing: parsed.noHeal ? false : true,
+      enableReview: parsed.noReview ? false : (parsed.review ?? false),
+      updateTimeoutMs: parsed.buildTimeoutMs,
+      skillTimeoutMs: parsed.skillTimeoutMs,
+      reviewCycles: parsed.reviewCycles,
+      maxReviewPages: parsed.maxReviewPages,
+    });
+
+    console.log(`\nUpdate status: ${report.status}`);
+    console.log(
+      `Steps: ${report.steps.filter((step) => step.status === 'success').length}/${report.steps.length} complete`,
+    );
+    if (report.status !== 'success') {
+      const failedSteps = report.steps
+        .filter((step) => step.status === 'failed')
+        .map((step) => step.id);
+      if (failedSteps.length) {
+        console.log(`Failed steps: ${failedSteps.join(', ')}`);
+      }
+      console.log(
+        `Validation: db=${report.validation.cli.databaseOk} fs=${report.validation.cli.filesystemOk} health=${report.validation.cli.healthCheckOk} browserErrors=${report.validation.browser.consoleErrors.length}`,
+      );
+    }
+    if (report.errors?.length) {
+      console.log('Errors:');
+      for (const err of report.errors) {
+        console.log(`- ${err.message}`);
+      }
+    }
+    if (report.summary) {
+      console.log('\n' + report.summary);
+    }
+    return;
   }
 
   if (!parsed.siteId) {

@@ -808,6 +808,7 @@ const buildValidation = async (
 const buildReport = async (params: {
   siteId: string;
   status: BuildReport['status'];
+  mode: BuildReport['mode'];
   steps: BuildStep[];
   validation: ValidationResult;
   screenshots: string[];
@@ -815,6 +816,7 @@ const buildReport = async (params: {
   startedAt: string;
   endedAt: string;
   exportBundle?: string;
+  update?: BuildReport['update'];
 }) => {
   const duration = new Date(params.endedAt).getTime() - new Date(params.startedAt).getTime();
   let wpVersion = 'unknown';
@@ -832,6 +834,7 @@ const buildReport = async (params: {
   const report: BuildReport = {
     siteId: params.siteId,
     status: params.status,
+    mode: params.mode,
     steps: params.steps,
     validation: params.validation,
     screenshots: params.screenshots,
@@ -846,6 +849,10 @@ const buildReport = async (params: {
       pluginsInstalled,
     },
   };
+
+  if (params.update) {
+    report.update = params.update;
+  }
 
   return report;
 };
@@ -1058,7 +1065,7 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
         input.prompt ?? siteSpec.prompt ?? '',
         steps,
         errors,
-        input.reviewCycles ?? 2,
+        input.reviewCycles ?? 5,
         input.maxReviewPages ?? 3,
       );
     } else {
@@ -1083,7 +1090,7 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
 
     if (!validationOk && input.enableHealing) {
       markStep(steps, 'heal', 'in_progress');
-      const maxHealCycles = input.healingCycles ?? 2;
+      const maxHealCycles = input.healingCycles ?? 5;
       for (let cycle = 1; cycle <= maxHealCycles; cycle += 1) {
         const startedAt = new Date().toISOString();
         await runtime.run(
@@ -1134,6 +1141,7 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
       const interimReport = await buildReport({
         siteId: input.siteId,
         status: 'success',
+        mode: 'build',
         steps,
         validation,
         screenshots,
@@ -1168,6 +1176,7 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
     const report = await buildReport({
       siteId: input.siteId,
       status,
+      mode: 'build',
       steps,
       validation,
       screenshots,
@@ -1205,6 +1214,7 @@ export const runBuild = async (input: BuildOrchestratorInput): Promise<BuildRepo
     const report = await buildReport({
       siteId: input.siteId,
       status: 'failed',
+      mode: 'build',
       steps,
       validation: {
         cli: { databaseOk: false, filesystemOk: false, healthCheckOk: false },
