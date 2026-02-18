@@ -10,7 +10,7 @@ Rules:
 - Be explicit about which file paths or post IDs will be edited.
 - Prefer theme.json for global background/text changes if present.
 
-Return a JSON object with:
+Return ONLY a JSON object with:
 {
 "targets": [
 { "type": "post", "id": "<id>", "action": "update_post_content" },

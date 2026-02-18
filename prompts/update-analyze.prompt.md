@@ -11,7 +11,7 @@ Rules:
 - Identify the homepage source of truth: post content vs templates vs template parts.
 - Capture reusable blocks (wp_block) referenced by content or templates.
 
-Return a JSON object with:
+Return ONLY a JSON object with:
 {
 "homeId": "<id or null>",
 "homeSource": "post" | "template",

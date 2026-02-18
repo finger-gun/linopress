@@ -23,6 +23,7 @@
     "@sisu-ai/adapter-openai": "latest",
     "@sisu-ai/core": "latest",
     "@sisu-ai/mw-conversation-buffer": "latest",
+    "@sisu-ai/mw-control-flow": "latest",
     "@sisu-ai/mw-error-boundary": "latest",
     "@sisu-ai/mw-register-tools": "latest",
     "@sisu-ai/mw-skills": "latest",
