@@ -11,6 +11,15 @@ export function TopBar() {
           <a className={styles.topNavItem} href="#" aria-current="page">
             Home
           </a>
+          <a className={styles.topNavItem} href="/features">
+            Features
+          </a>
+          <a className={styles.topNavItem} href="/pricing">
+            Pricing
+          </a>
+          <a className={styles.topNavItem} href="/about">
+            About
+          </a>
         </nav>
       </div>
     </header>
