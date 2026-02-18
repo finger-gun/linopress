@@ -40,18 +40,18 @@ The system SHALL display metadata grid showing pages created, theme, plugins, an
 - **THEN** system SHALL display "N/A" or hide that metadata card
 
 ### Requirement: Bundle download button
-The system SHALL provide prominent download button for .tar.gz bundle.
+The system SHALL provide prominent download button UI for .tar.gz bundles, with non-functional placeholder behavior in the UI-only phase.
 
 #### Scenario: Download initiation
 - **WHEN** user clicks "Download bundle" button
-- **THEN** system SHALL trigger download via `/api/builds/[id]/download` with progress indication
+- **THEN** system SHALL show download-intent feedback and phase-limitation messaging without invoking backend transport
 
 #### Scenario: Large file download progress
 - **WHEN** downloading bundle > 50MB
-- **THEN** system SHALL show download progress bar if browser supports it
+- **THEN** system SHALL display placeholder progress UI state suitable for future real transport integration
 
 #### Scenario: Download error handling
-- **WHEN** download fails (network error, file missing)
+- **WHEN** download action is unavailable in UI-only phase
 - **THEN** system SHALL display error toast and allow retry
 
 ### Requirement: Bundle information display

@@ -3,11 +3,11 @@
 ## ADDED Requirements
 
 ### Requirement: Real-time step visualization
-The system SHALL display the 11-step build pipeline with real-time status updates via Server-Sent Events.
+The system SHALL display the 11-step build pipeline with real-time status updates via frontend service subscriptions.
 
 #### Scenario: Initial build start
 - **WHEN** user navigates to `/builds/[id]` page
-- **THEN** system SHALL establish SSE connection and display all steps in pending state
+- **THEN** system SHALL subscribe to build updates through the build service and display all steps in pending state
 
 #### Scenario: Step activation
 - **WHEN** CLI begins a new build step
@@ -44,11 +44,11 @@ The system SHALL display elapsed build time updated every second.
 - **THEN** system SHALL display estimated remaining time based on average step duration
 
 ### Requirement: Build logs viewer
-The system SHALL provide collapsible log viewer showing CLI output.
+The system SHALL provide collapsible log viewer showing simulated build logs in the UI-only phase.
 
 #### Scenario: Log expansion
 - **WHEN** user clicks "View logs" toggle
-- **THEN** system SHALL reveal scrollable log area with CLI stdout/stderr
+- **THEN** system SHALL reveal scrollable log area with mock log entries aligned to build step transitions
 
 #### Scenario: Auto-scroll on new logs
 - **WHEN** new log lines are received
@@ -63,15 +63,15 @@ The system SHALL allow users to cancel in-progress builds.
 
 #### Scenario: Build termination
 - **WHEN** cancel is confirmed
-- **THEN** system SHALL terminate CLI process and mark build as "cancelled"
+- **THEN** system SHALL stop simulated progression and mark build as "cancelled"
 
-### Requirement: SSE connection resilience
-The system SHALL handle SSE disconnections and reconnect automatically.
+### Requirement: Subscription resilience UX
+The system SHALL handle interrupted subscription updates and recover automatically.
 
 #### Scenario: Connection drop
-- **WHEN** SSE connection is lost
+- **WHEN** mock subscription updates are interrupted
 - **THEN** system SHALL attempt reconnection every 5 seconds with exponential backoff
 
 #### Scenario: Build already complete
 - **WHEN** reconnecting to completed build
-- **THEN** system SHALL fetch final status via REST API and redirect to site details
+- **THEN** system SHALL fetch final state via build service and redirect to site details

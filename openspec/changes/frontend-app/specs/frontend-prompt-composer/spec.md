@@ -36,14 +36,14 @@ The system SHALL provide collapsible advanced options for plugin selection, lang
 - **THEN** system SHALL include selected plugins in build request
 
 ### Requirement: Build request submission
-The system SHALL submit build requests to the API when user clicks "Generate site" button.
+The system SHALL submit build requests through a frontend build service contract when user clicks "Generate site" button.
 
 #### Scenario: Valid prompt submission
 - **WHEN** user clicks "Generate site" with valid prompt
-- **THEN** system SHALL POST to `/api/builds/create` and redirect to build progress page
+- **THEN** system SHALL call `buildService.createBuild()` and redirect to build progress page
 
 #### Scenario: Server error handling
-- **WHEN** API returns error status
+- **WHEN** service call returns error state
 - **THEN** system SHALL display error message without navigation
 
 ### Requirement: Visual fidelity to landing page

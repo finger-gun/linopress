@@ -23,48 +23,44 @@
 - [ ] 3.5 Verify visual fidelity matches `landingpage/index.html` exactly
 - [ ] 3.6 Copy logo SVG files to `app/public/assets/`
 
-## 4. API Layer - Build Queue
+## 4. Frontend Data Contracts & Mock Store
 
-- [ ] 4.1 Create `app/src/lib/build-queue.ts` with in-memory `Map<buildId, Build>` state
-- [ ] 4.2 Define TypeScript types: `Build`, `BuildStep`, `BuildRequest`, `BuildStatus`
-- [ ] 4.3 Implement `generateBuildId()` using `crypto.randomBytes(12).toString('hex')`
-- [ ] 4.4 Implement `reconstructBuildsFromExports()` function to scan `.linopress/exports/` on startup
-- [ ] 4.5 Add build queue helper functions: `getBuild()`, `updateBuild()`, `deleteBuild()`
+- [ ] 4.1 Create `app/src/lib/build-service.ts` with frontend service interface (`createBuild`, `subscribe`, `getBuild`, `cancelBuild`)
+- [ ] 4.2 Define TypeScript types: `BuildState`, `BuildStep`, `BuildRequest`, `BuildStatus`, `BuildLogEntry`
+- [ ] 4.3 Implement deterministic frontend buildId generator suitable for mock runtime
+- [ ] 4.4 Create `app/src/lib/mock-build-service.ts` with in-memory state and fixture-driven transitions
+- [ ] 4.5 Add helper functions for fixture selection, status transitions, and simulated timing controls
 
-## 5. API Layer - Create Build Endpoint
+## 5. Mock Build Creation Flow (UI-facing)
 
-- [ ] 5.1 Create `app/src/app/api/builds/create/route.ts`
-- [ ] 5.2 Implement POST handler validating `BuildRequest` schema (prompt required, max 2000 chars)
-- [ ] 5.3 Implement CLI spawn logic: `spawn('node', ['../dist/cli.js', 'build', buildId, '--prompt', ...], { detached: true })`
-- [ ] 5.4 Assign random port (8000-9000 offset) for WordPress stack
-- [ ] 5.5 Store initial build state in queue with status "queued"
-- [ ] 5.6 Return `{ buildId, status: "queued", estimatedDuration: 90 }` JSON response
-- [ ] 5.7 Add error handling for CLI spawn failures (return 500)
+- [ ] 5.1 Wire prompt submission to `buildService.createBuild()` instead of API routes
+- [ ] 5.2 Validate `BuildRequest` in frontend service boundary (prompt required, max 2000 chars)
+- [ ] 5.3 Initialize mock build state with status `queued` and seeded pipeline steps
+- [ ] 5.4 Simulate transition from `queued` to `running` with deterministic timer behavior
+- [ ] 5.5 Return `{ buildId, status: "queued", estimatedDuration }` from mock service
+- [ ] 5.6 Add error-path fixtures for failed build start and validation rejection
 
-## 6. API Layer - Status Endpoint
+## 6. Mock Status Retrieval Flow
 
-- [ ] 6.1 Create `app/src/app/api/builds/[id]/status/route.ts`
-- [ ] 6.2 Implement GET handler fetching build from queue by ID
-- [ ] 6.3 Return full `Build` object with steps, timestamps, bundlePath if complete
-- [ ] 6.4 Return 404 if buildId not found
-- [ ] 6.5 Poll `.linopress/exports/[id]/` directory to update bundle path and screenshots
+- [ ] 6.1 Implement `buildService.getBuild(buildId)` for details and reload-safe fallback behavior
+- [ ] 6.2 Return full `BuildState` including steps, timestamps, mock bundle metadata, and screenshots
+- [ ] 6.3 Handle unknown buildId with frontend-friendly not-found state
+- [ ] 6.4 Add fixture variants for completed, failed, and cancelled builds
 
-## 7. API Layer - SSE Streaming Endpoint
+## 7. Mock Progress Subscription Flow
 
-- [ ] 7.1 Create `app/src/app/api/builds/[id]/stream/route.ts`
-- [ ] 7.2 Implement GET handler returning `ReadableStream` with SSE headers
-- [ ] 7.3 Set up polling interval (1000ms) to read build state and emit events
-- [ ] 7.4 Emit `data: ${JSON.stringify(build)}\n\n` format for each update
-- [ ] 7.5 Close stream when build reaches "complete" or "failed" status
-- [ ] 7.6 Handle client disconnections and clean up intervals
+- [ ] 7.1 Implement `buildService.subscribe(buildId, onUpdate)` event subscription contract
+- [ ] 7.2 Emit state updates at fixed intervals to simulate live progress
+- [ ] 7.3 Stop updates and cleanup timers when build reaches terminal state
+- [ ] 7.4 Support unsubscribe behavior on route unmount/navigation
+- [ ] 7.5 Simulate disconnect/reconnect UX states for progress page resilience testing
 
-## 8. API Layer - Download Endpoint
+## 8. Download Action Shell (Non-functional)
 
-- [ ] 8.1 Create `app/src/app/api/builds/[id]/download/route.ts`
-- [ ] 8.2 Implement GET handler locating bundle file in `.linopress/exports/[id]/`
-- [ ] 8.3 Return 404 if bundle file doesn't exist
-- [ ] 8.4 Stream .tar.gz file with headers: `Content-Type: application/gzip`, `Content-Disposition: attachment`
-- [ ] 8.5 Use `fs.createReadStream()` to avoid loading large files into memory
+- [ ] 8.1 Create `Download bundle` UI action wired to mock handler
+- [ ] 8.2 Show phase-1 message indicating backend download is not yet implemented
+- [ ] 8.3 Render mock bundle metadata (name, size, timestamp, contents list)
+- [ ] 8.4 Add disabled/loading/error visual states for future integration
 
 ## 9. Prompt Composer UI
 
@@ -81,9 +77,9 @@
 
 - [ ] 10.1 Create `app/src/app/builds/[id]/page.tsx` route
 - [ ] 10.2 Create `app/src/components/BuildProgress.tsx` component
-- [ ] 10.3 Implement SSE client using EventSource API connecting to `/api/builds/[id]/stream`
+- [ ] 10.3 Connect component to `buildService.subscribe()` updates
 - [ ] 10.4 Render 11 build steps with icons: ✓ (complete), ⏳ (active), ⏸ (pending), ✗ (failed)
-- [ ] 10.5 Update step states on SSE messages
+- [ ] 10.5 Update step states on service events
 - [ ] 10.6 Calculate and display progress bar (completed / total * 100%)
 - [ ] 10.7 Show elapsed time with `setInterval` updating every second
 - [ ] 10.8 Display estimated remaining time (optional for v1)
@@ -92,7 +88,7 @@
 ## 11. Build Progress - Logs Viewer
 
 - [ ] 11.1 Add collapsible "View logs" section in build progress page
-- [ ] 11.2 Implement log streaming from CLI stdout/stderr (store in build queue)
+- [ ] 11.2 Implement mock log streaming from fixture timeline events
 - [ ] 11.3 Render logs in monospace font with auto-scroll behavior
 - [ ] 11.4 Disable auto-scroll when user manually scrolls up
 
@@ -100,27 +96,27 @@
 
 - [ ] 12.1 Add "Cancel build" button in build progress UI
 - [ ] 12.2 Show confirmation dialog before cancellation
-- [ ] 12.3 Implement cancel logic: find CLI process PID and send SIGTERM
+- [ ] 12.3 Implement cancel logic via `buildService.cancelBuild(buildId)` in mock runtime
 - [ ] 12.4 Update build status to "cancelled" in queue
-- [ ] 12.5 Close SSE connection on cancellation
+- [ ] 12.5 Close mock subscription on cancellation
 
 ## 13. Site Details UI
 
 - [ ] 13.1 Create `app/src/app/sites/[id]/page.tsx` route
-- [ ] 13.2 Fetch build details using `/api/builds/[id]/status`
+- [ ] 13.2 Fetch build details via `buildService.getBuild(buildId)`
 - [  ] 13.3 Create `app/src/components/SitePreview.tsx` component
 - [ ] 13.4 Display site name, completion status, build duration
 - [ ] 13.5 Implement screenshots carousel with prev/next navigation
 - [ ] 13.6 Display metadata cards: Pages, Theme, Plugins, Technical details
 - [ ] 13.7 Show bundle information: size, contents list, timestamp
-- [ ] 13.8 Add "Download bundle" button linking to `/api/builds/[id]/download`
+- [ ] 13.8 Add "Download bundle" button with mock/placeholder integration copy
 - [ ] 13.9 Add "Build another site" button navigating to `/new`
 
 ## 14. Error Handling
 
 - [ ] 14.1 Create `app/src/app/error.tsx` error boundary component
 - [ ] 14.2 Add error states for failed builds in site details page
-- [ ] 14.3 Implement SSE reconnection logic with exponential backoff
+- [ ] 14.3 Implement mock subscription reconnection UX with exponential backoff simulation
 - [ ] 14.4 Add toast notifications for API errors (optional: use Sonner or custom)
 - [ ] 14.5 Handle 404 for missing builds gracefully
 
@@ -133,11 +129,11 @@
 
 ## 16. Testing & Validation
 
-- [ ] 16.1 Test full flow: prompt → build → progress → download on development server
+- [ ] 16.1 Test full UI flow: prompt → mock build progress → site details on development server
 - [ ] 16.2 Verify CSS matches landing page aesthetic (electric border, grain, colors)
-- [ ] 16.3 Test SSE disconnection and reconnection scenarios
-- [ ] 16.4 Test build cancellation and process cleanup
-- [ ] 16.5 Verify .tar.gz downloads work for files >100MB
+- [ ] 16.3 Test subscription disconnection and reconnection scenarios
+- [ ] 16.4 Test build cancellation and timer/resource cleanup
+- [ ] 16.5 Verify download action shell states and placeholder messaging
 - [ ] 16.6 Check accessibility: keyboard navigation, ARIA labels, color contrast
 
 ## 17. Documentation
@@ -145,13 +141,13 @@
 - [ ] 17.1 Create `app/README.md` with setup instructions
 - [ ] 17.2 Document environment variables in README
 - [ ] 17.3 Add development server commands (`npm run dev`, `npm run build`)
-- [ ] 17.4 Document deployment options (Vercel, self-hosted)
+- [ ] 17.4 Document phase-1 limitation: frontend UI only, backend integration deferred
 - [ ] 17.5 Update root `README.md` linking to frontend app
 
 ## 18. Production Readiness
 
-- [ ] 18.1 Add rate limiting middleware (429 if > `MAX_CONCURRENT_BUILDS`)
-- [ ] 18.2 Implement graceful shutdown handlers for active SSE connections
-- [ ] 18.3 Add logging for build creation, errors, and completions
-- [ ] 18.4 Test server restart with in-progress builds (verify reconstruction)
+- [ ] 18.1 Add backend handoff checklist mapping each mock service method to future API endpoint
+- [ ] 18.2 Define event contract for future SSE transport compatibility
+- [ ] 18.3 Add technical debt notes for replacing mock download with streamed bundle endpoint
+- [ ] 18.4 Document acceptance criteria for starting backend phase
 - [ ] 18.5 Optimize Next.js build output (minimize bundle size)

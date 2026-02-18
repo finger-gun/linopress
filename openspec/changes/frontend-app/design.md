@@ -1,24 +1,24 @@
 ## Context
 
 Linopress has a mature CLI-based build pipeline but lacks a web interface. The frontend must:
-- Maintain the existing CLI as the build engine (no rewrite)
-- Provide real-time feedback during 90-120 second builds
+- Deliver the complete product UI shell before backend integration
+- Provide realistic interactive flows using frontend-managed mock state
 - Match the landing page's dark editorial aesthetic with plain CSS
 - Support standalone deployment separate from CLI
 
 Current constraints:
 - Builds run in isolated Docker stacks (cannot be migrated mid-run)
-- No database for persistence yet (v1 uses in-memory state)
-- Must work with existing `.linopress/` directory structure
+- Backend contracts are still evolving and should not block UI delivery
+- v1 frontend scope must avoid server/runtime side-effects
 
 ## Goals / Non-Goals
 
 **Goals:**
 - Standalone Next.js app in `app/` directory (independent deployment)
-- REST API + SSE for build orchestration and progress streaming
+- UI routes and components for end-to-end user journey (landing → compose → progress → site details)
+- Frontend service interfaces and mock adapters that model future API behavior
 - Reuse landing page CSS design system (no Tailwind, no component libraries)
-- Simple build queue (spawn CLI via child_process)
-- Downloadable .tar.gz bundles from web UI
+- Interactive progress, logs, and site details states rendered in UI
 
 **Non-Goals:**
 - User authentication (v1 is anonymous/trust-based)
@@ -26,6 +26,7 @@ Current constraints:
 - Live site previews (export-only workflow)
 - Concurrent build limits (manual resource management)
 - Modification of existing CLI code
+- Backend API routes, process spawning, SSE, and real bundle streaming in this phase
 
 ## Decisions
 
@@ -43,86 +44,61 @@ Current constraints:
 - Vite + Express: Two separate processes to manage
 - Plain Node + React SPA: More complex SSE implementation
 
-### 2. Build Execution: CLI via child_process
+### 2. Build Execution Simulation: Frontend Mock Adapter
 
-**Decision**: Spawn `node dist/cli.js build <id> ...` per build request  
+**Decision**: Use a mock build adapter in the frontend that simulates lifecycle transitions (`queued` → `running` → `complete|failed`) and emits deterministic step updates.  
 **Rationale**:
-- Zero changes to existing CLI
-- Process isolation (crash-safe)
-- Leverage all CLI features (validation, self-healing, export)
+- Enables shipping and validating UX without backend coupling
+- Preserves future integration shape via typed contracts
+- Reduces rework by stabilizing UI behavior and states first
 
 **Alternatives considered**:
-- Import CLI as library: Would require refactoring CLI for programmatic use
-- Queue system (Bull/BullMQ): Over-engineered for v1 scale
+- Building API routes now: would split focus and increase implementation risk
+- Static-only UI with no simulated behavior: insufficient for validating user journey
 
 **Implementation**:
 ```typescript
-// POST /api/builds/create
-const buildId = randomBytes(12).toString('hex');
-const child = spawn('node', [
-  '../dist/cli.js', 'build', buildId,
-  '--prompt', prompt,
-  '--port', String(8000 + portOffset),
-  '--browser'
-], { detached: true, stdio: 'ignore' });
-child.unref(); // Don't wait for completion
-```
-
-### 3. Progress Streaming: Server-Sent Events (SSE)
-
-**Decision**: SSE over WebSocket for progress updates  
-**Rationale**:
-- One-way: server → client (no need for bidirectional)
-- Built-in reconnection
-- Standard HTTP (firewall-friendly)
-- Simpler than socket.io dependency
-
-**Alternatives considered**:
-- WebSocket: Overkill for one-way streaming
-- Polling: Wasteful, delays in feedback
-
-**Implementation**:
-```typescript
-// GET /api/builds/[id]/stream
-export async function GET(req, { params }) {
-  const stream = new ReadableStream({
-    start(controller) {
-      const interval = setInterval(() => {
-        const build = buildqueue.get(params.id);
-        if (!build) {
-          controller.close();
-          clearInterval(interval);
-          return;
-        }
-        controller.enqueue(
-          `data: ${JSON.stringify(build)}\n\n`
-        );
-      }, 1000);
-    }
-  });
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache'
-    }
-  });
+// client-side adapter interface
+interface BuildService {
+  createBuild(request: BuildRequest): Promise<{ buildId: string }>;
+  subscribe(buildId: string, onUpdate: (state: BuildState) => void): () => void;
+  getBuild(buildId: string): Promise<BuildState | null>;
 }
+
+// mock implementation drives UI transitions with timers
 ```
 
-### 4. State Management: In-Memory Map
+### 3. Progress Updates: Client-Side Subscription Interface
 
-**Decision**: `Map<buildId, Build>` for v1  
+**Decision**: Implement progress updates through a frontend subscription contract that can later be backed by SSE without changing UI components.  
 **Rationale**:
-- Simple, no DB setup required
-- Sufficient for single-server deployment
-- Read build artifacts from `.linopress/exports/` for persistence
+- Keeps component contracts stable across mocked and real backends
+- Allows testing loading, error, and reconnect UX states now
+- Defers transport-level decisions to backend phase
 
 **Alternatives considered**:
-- Redis: Requires separate service
-- PostgreSQL: Over-engineered for key-value state
-- Filesystem JSON: Race conditions, slow
+- Hard-coding timers inside UI components: poor separation of concerns
+- Delaying progress page until backend exists: blocks UI validation
 
-**Trade-off**: State lost on server restart (acceptable for MVP)
+**Implementation**:
+```typescript
+const unsubscribe = buildService.subscribe(buildId, nextState => {
+  setBuildState(nextState);
+});
+```
+
+### 4. State Management: Frontend Store + Fixture Profiles
+
+**Decision**: Use a frontend-local store for transient runtime state plus deterministic fixture profiles for previewing success/failure variants.  
+**Rationale**:
+- Fast UI iteration with reliable demo states
+- No server lifecycle concerns
+- Improves testability for visual and interaction states
+
+**Alternatives considered**:
+- Using only static JSON snapshots: cannot validate transition UX
+
+**Trade-off**: State resets on page reload (acceptable for UI-only phase)
 
 ### 5. CSS Architecture: Plain CSS with Design Tokens
 
@@ -163,29 +139,27 @@ app/
 │   ├── page.tsx                # Landing
 │   ├── new/page.tsx            # Prompt composer
 │   ├── builds/[id]/page.tsx    # Progress
-│   └── api/builds/             # API routes
+│   └── sites/[id]/page.tsx      # Site details
+├── src/lib/
+│   ├── build-service.ts         # Service contracts
+│   └── mock-build-service.ts    # Mock adapter
 └── styles/               # Plain CSS
 ```
 
 ## Risks / Trade-offs
 
-### Risk: Stale build state after server restart
-
-**Mitigation**: Read `.linopress/exports/<buildId>/` on app start to reconstruct build map
-
-### Risk: No concurrency limits → resource exhaustion
+### Risk: Divergence between mock behavior and future backend behavior
 
 **Mitigation**:
-- Document recommended max (3-5 concurrent builds)
-- Add `MAX_CONCURRENT_BUILDS` env var as soft limit (return 429 if exceeded)
-- Future: Proper queue system
+- Define strict TypeScript contracts for request/response models
+- Keep fixtures aligned with OpenSpec scenarios
+- Add explicit integration tasks in follow-up backend change
 
-### Risk: Long-polling SSE connections drain resources
+### Risk: Stakeholders may interpret UI actions as production-ready backend flows
 
 **Mitigation**:
-- Close SSE after build completion
-- Client reconnects if dropped
-- Nginx proxy timeout (120s)
+- Add clear documentation that build/download actions are mocked
+- Include placeholder copy in UI where appropriate
 
 ### Risk: CSS drift between landing page and app
 
@@ -194,15 +168,11 @@ app/
 - Use same font CDN links
 - Add visual regression tests (future)
 
-### Risk: Build ID collision (random bytes)
-
-**Mitigation**: 12-byte hex = 281 trillion combinations (negligible collision chance)
-
 ### Trade-off: No authentication → abuse potential
 
 **Decision**: Accept for MVP. Add rate limiting + IP-based quotas in v2.
 
-### Trade-off: In-memory state → builds lost on crash
+### Trade-off: Frontend-local state → progress resets on refresh
 
 **Decision**: Accept. Users can restart builds. Add persistence in v2.
 
@@ -219,46 +189,40 @@ app/
                               │ HTTP/SSE
                               ↓
 ┌──────────────────────────────────────────────────────────────┐
-│                Next.js Server (app/)                         │
+│                Next.js Runtime (app/)                        │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │ API Routes                                          │   │
-│  │  - POST /api/builds/create    (spawn CLI)          │   │
-│  │  - GET  /api/builds/[id]/status  (read state)      │   │
-│  │  - GET  /api/builds/[id]/stream  (SSE)             │   │
-│  │  - GET  /api/builds/[id]/download (serve .tar.gz)  │   │
+│  │ UI Routes + Components                              │   │
+│  │  - /                  (landing)                     │   │
+│  │  - /new               (prompt composer)             │   │
+│  │  - /builds/[id]       (progress UI)                │   │
+│  │  - /sites/[id]        (site details UI)            │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                              │                               │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │ Build Queue (in-memory)                             │   │
-│  │  Map<buildId, { status, steps, startTime, ... }>   │   │
+│  │ Build Service Interface                             │   │
+│  │  - createBuild()                                    │   │
+│  │  - subscribe()                                      │   │
+│  │  - getBuild()                                       │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                              │                               │
-│                              │ child_process.spawn           │
+│                              │ Adapter boundary              │
 │                              ↓                               │
 └──────────────────────────────────────────────────────────────┘
                               │
-                              │ exec
+                              │ mocked implementation (phase 1)
                               ↓
 ┌──────────────────────────────────────────────────────────────┐
-│                 Linopress CLI (dist/cli.js)                  │
-│  - Unchanged build orchestrator                              │
-│  - Docker provisioning                                       │
-│  - Agent runtime + skills                                    │
-│  - Writes to .linopress/exports/<buildId>/                   │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              │ docker exec
-                              ↓
-┌──────────────────────────────────────────────────────────────┐
-│         Docker Containers (per build)                        │
-│  - wordpress + db + agent-api + browser                      │
+│               Future Backend Integration (phase 2)           │
+│  - API routes + process orchestration                        │
+│  - SSE/stream transport                                      │
+│  - Export file serving                                       │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Models
 
-### BuildRequest (POST /api/builds/create)
+### BuildRequest (frontend service contract)
 ```typescript
 {
   prompt: string;                    // Required
@@ -269,7 +233,7 @@ app/
 }
 ```
 
-### Build (in-memory state)
+### BuildState (frontend runtime state)
 ```typescript
 {
   id: string;                        // 12-byte hex
@@ -278,8 +242,12 @@ app/
   startedAt: Date;
   completedAt?: Date;
   steps: BuildStep[];
-  bundlePath?: string;               // Relative to .linopress/exports/
-  screenshots?: string[];            // Paths to PNGs
+  bundle?: {
+    fileName: string;
+    sizeBytes: number;
+    ready: boolean;
+  };
+  screenshots?: string[];            // Mock/static asset URLs in phase 1
   error?: string;
 }
 ```
@@ -300,26 +268,23 @@ app/
 - Port landing page to `/` route
 - Set up CSS token system
 
-### Phase 2: API Layer (Week 2)
-- Implement POST `/api/builds/create` (spawn CLI)
-- Add in-memory build queue
-- Test CLI spawning and process cleanup
+### Phase 2: Prompt + Progress UI (Week 2)
+- Implement prompt composer route and validation
+- Implement build progress route with mock state transitions
+- Add logs panel and cancellation UX states (frontend only)
 
-### Phase 3: Progress Streaming (Week 3)
-- Implement GET `/api/builds/[id]/stream` (SSE)
-- Poll `.linopress/` for build state updates
-- Build React progress component
+### Phase 3: Site Details UI (Week 3)
+- Implement site details route and metadata cards
+- Add screenshot carousel and bundle information block
+- Wire download action to placeholder/mock handler
 
-### Phase 4: Downloads (Week 4)
-- Implement GET `/api/builds/[id]/download`
-- Add site preview page with screenshots
-- Handle error states
+### Phase 4: Interaction Hardening (Week 4)
+- Empty/error/loading states across all pages
+- Responsive and accessibility polish
+- Contract tests for mock service behaviors
 
 ### Phase 5: Polish (Week 5)
-- Responsive design
-- Loading states
-- Error boundaries
-- Accessibility audit
+- Documentation of phase boundaries and backend handoff notes
 
 ### Rollback Strategy
 - `app/` is standalone - delete directory to rollback
@@ -328,7 +293,7 @@ app/
 
 ## Open Questions
 
-1. **Port assignment strategy**: Random port 8000-9000 or sequential? (Decision: Random for v1)
-2. **Screenshot storage**: Keep in `.linopress/` or copy to `app/public/`? (Decision: Serve from .linopress/)
-3. **Build retention policy**: Auto-delete after N days? (Decision: Manual cleanup for v1)
-4. **Error logging**: stdout/stderr to file or just in-memory? (Decision: In-memory for v1)
+1. **Mock realism level**: Should mock durations mirror observed CLI timings or be fast for UX development? (Decision: Use realistic defaults with dev override)
+2. **Fixture source**: Keep fixtures in TS modules or JSON files under `app/src/fixtures/`? (Decision: JSON fixtures with typed adapters)
+3. **Backend handoff boundary**: Which UI actions remain disabled vs enabled-with-placeholder copy? (Decision: Keep actions enabled with explicit phase-1 messaging)
+4. **Integration sequencing**: Should backend phase start with create/status APIs or full end-to-end path first? (Decision: create/status first)
