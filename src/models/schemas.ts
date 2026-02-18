@@ -91,9 +91,17 @@ export const validationResultSchema = z.object({
   }),
 });
 
+export const updateRequestSchema = z.object({
+  siteId: z.string().min(1),
+  prompt: z.string().min(1),
+  baseSpecPath: z.string().min(1).optional(),
+  allowlistProfile: z.enum(['default', 'strict']).optional(),
+});
+
 export const buildReportSchema = z.object({
   siteId: z.string().min(1),
   status: z.enum(['success', 'failed', 'partial']),
+  mode: z.enum(['build', 'update']),
   steps: z.array(buildStepSchema),
   validation: validationResultSchema,
   screenshots: z.array(z.string().min(1)),
@@ -101,6 +109,13 @@ export const buildReportSchema = z.object({
   errors: z.array(errorLogSchema).optional(),
   healingCycles: z.array(healingCycleSchema).optional(),
   summary: z.string().optional(),
+  update: z
+    .object({
+      prompt: z.string().min(1),
+      baseSpecPath: z.string().min(1).optional(),
+      allowlistProfile: z.enum(['default', 'strict']).optional(),
+    })
+    .optional(),
   metadata: z.object({
     startTime: z.string().min(1),
     endTime: z.string().min(1),
@@ -129,6 +144,7 @@ export const manifestSchema = z.object({
 export const validateSiteSpec = (input: unknown) => siteSpecSchema.parse(input);
 export const validatePageSpec = (input: unknown) => pageSpecSchema.parse(input);
 export const validateSiteSpecExtraction = (input: unknown) => siteSpecExtractionSchema.parse(input);
+export const validateUpdateRequest = (input: unknown) => updateRequestSchema.parse(input);
 export const validateBuildReport = (input: unknown) => buildReportSchema.parse(input);
 export const validateValidationResult = (input: unknown) => validationResultSchema.parse(input);
 export const validateManifest = (input: unknown) => manifestSchema.parse(input);

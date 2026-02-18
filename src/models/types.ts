@@ -83,9 +83,17 @@ export interface ValidationResult {
   };
 }
 
+export interface UpdateRequest {
+  siteId: string;
+  prompt: string;
+  baseSpecPath?: string;
+  allowlistProfile?: 'default' | 'strict';
+}
+
 export interface BuildReport {
   siteId: string;
   status: 'success' | 'failed' | 'partial';
+  mode: 'build' | 'update';
   steps: BuildStep[];
   validation: ValidationResult;
   screenshots: string[];
@@ -93,6 +101,11 @@ export interface BuildReport {
   errors?: ErrorLog[];
   healingCycles?: HealingCycle[];
   summary?: string;
+  update?: {
+    prompt: string;
+    baseSpecPath?: string;
+    allowlistProfile?: 'default' | 'strict';
+  };
   metadata: {
     startTime: string;
     endTime: string;
