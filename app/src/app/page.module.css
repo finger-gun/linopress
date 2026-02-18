@@ -1,13 +1,69 @@
 .page {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
   position: relative;
   overflow: hidden;
-  padding: 2rem 1rem;
   background: #050505;
   color: #fafafa;
   font-family: "Outfit", var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.topBar {
+  z-index: 2;
+  width: 100%;
+  position: relative;
+  backdrop-filter: blur(8px);
+}
+
+.topBar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+      rgba(0, 217, 255, 0.36) 0%,
+      rgba(124, 58, 237, 0.34) 52%,
+      rgba(244, 114, 182, 0.36) 100%);
+}
+
+.topBarInner {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.topNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topNavItem {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.topNavItem:hover,
+.topNavItem:focus-visible {
+  color: #ffffff;
+}
+
+.mainContent {
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
 }
 
 .glowOne,
@@ -34,7 +90,6 @@
 }
 
 .hero {
-  z-index: 1;
   width: min(700px, 100%);
   display: flex;
   flex-direction: column;
@@ -42,14 +97,8 @@
   gap: 1.5rem;
 }
 
-.brand {
-  width: clamp(150px, 18vw, 220px);
-  height: auto;
-  opacity: 0.95;
-}
-
 .cta {
-  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-size: clamp(1.6rem, 5vw, 3.4rem);
   font-weight: 600;
   letter-spacing: -0.02em;
   text-align: center;

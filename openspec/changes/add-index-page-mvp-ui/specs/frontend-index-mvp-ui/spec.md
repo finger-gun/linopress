@@ -62,6 +62,24 @@ The prompt interaction on the index page MUST remain a UI-only MVP behavior and 
 
 ## MODIFIED Requirements
 
+### Requirement: Logo and CTA appear above prompt window
+The index page SHALL render a dedicated top bar where the product logo appears at the top-left of the viewport and the layout supports a simple top navigation area. The page SHALL visually separate the top bar from the main content with a translucent 1px divider while preserving the CTA-guided prompt flow in the main content area.
+
+#### Scenario: Top bar presents logo placement and nav-ready structure
+- **WHEN** the index page finishes initial render
+- **THEN** the logo is visible in a top bar aligned to the top-left area of the viewport
+- **AND** a top navigation region is present for simple primary navigation items (even if minimally populated in MVP)
+
+#### Scenario: Top bar is visually separated from main content
+- **WHEN** a user views the boundary between header and main content
+- **THEN** a translucent 1px divider with the shared brand gradient clearly separates the top bar from the main interaction area
+- **AND** the divider does not introduce backend behavior or alter UI-only MVP scope
+
+#### Scenario: CTA and prompt remain the primary main-content interaction
+- **WHEN** a user views the main content area after initial render
+- **THEN** CTA messaging remains visible with prompt guidance
+- **AND** the prompt composer remains the central typeable interaction in the main viewport area
+
 ### Requirement: Prompt composer feels integrated and includes core actions
 The prompt window SHALL present the textarea as an integrated part of the composer body and provide an action row beneath it with both attachment and submit controls. The submit control SHALL provide local visual loading feedback on click using motion in the shared gradient treatment.
 
@@ -84,3 +102,20 @@ The prompt window SHALL present the textarea as an integrated part of the compos
 - **THEN** the textarea automatically grows to fit content height while the rendered line count remains between configured minimum and maximum line bounds
 - **AND** default behavior uses a minimum of 1 line and a maximum of 10 lines when bounds are not explicitly configured
 - **AND** once the maximum line bound is reached, additional content is accommodated via internal textarea scrolling
+
+### Requirement: Brand logo component supports ratio-preserving size props
+The reusable brand logo component SHALL accept optional width and height props for layout flexibility. When only one size prop is provided, the missing dimension MUST be derived from the component's default aspect ratio so the rendered logo remains proportionally correct.
+
+#### Scenario: Width-only configuration derives height
+- **WHEN** a consumer renders the brand logo with a custom width and no height
+- **THEN** the component computes height from the default logo ratio
+- **AND** the rendered logo remains proportionally scaled
+
+#### Scenario: Height-only configuration derives width
+- **WHEN** a consumer renders the brand logo with a custom height and no width
+- **THEN** the component computes width from the default logo ratio
+- **AND** the rendered logo remains proportionally scaled
+
+#### Scenario: No explicit size uses defaults
+- **WHEN** a consumer renders the brand logo without width and height props
+- **THEN** default logo width and height values are used

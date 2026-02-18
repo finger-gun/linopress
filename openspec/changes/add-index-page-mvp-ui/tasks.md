@@ -24,3 +24,16 @@
 ## 4. Reusable component refactor
 
 - [x] 4.1 Extract relevant index-page UI elements into reusable route-local components and compose them from `app/src/app/page.tsx` without changing MVP behavior.
+
+## 5. Top bar layout refinement
+
+- [x] 5.1 Move brand logo into a dedicated top bar aligned to the top-left of the viewport and keep main CTA/prompt composition in the primary content region.
+- [x] 5.2 Add a simple top navigation slot in the header and separate top bar from main content using a translucent 1px divider.
+
+## 6. Brand logo sizing API refinement
+
+- [x] 6.1 Extend `app/src/app/components/BrandLogo.tsx` to accept optional `width` and `height` props and preserve aspect ratio when only one dimension is supplied.
+
+## 7. Header divider visual refinement
+
+- [x] 7.1 Update the top-bar bottom divider to use the shared brand gradient while preserving a translucent 1px separation effect.

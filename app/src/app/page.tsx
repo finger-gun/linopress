@@ -33,10 +33,23 @@ export default function Home() {
       <div className={styles.glowOne} aria-hidden="true" />
       <div className={styles.glowTwo} aria-hidden="true" />
 
-      <section className={styles.hero}>
-        <BrandLogo />
-        <HeroCta />
-        <PromptComposer isSubmitting={isSubmitting} onSubmit={handleSubmit} />
+      <header className={styles.topBar}>
+        <div className={styles.topBarInner}>
+          <BrandLogo height={40} />
+
+          <nav className={styles.topNav} aria-label="Primary">
+            <a className={styles.topNavItem} href="#" aria-current="page">
+              Home
+            </a>
+          </nav>
+        </div>
+      </header>
+
+      <section className={styles.mainContent}>
+        <div className={styles.hero}>
+          <HeroCta />
+          <PromptComposer isSubmitting={isSubmitting} onSubmit={handleSubmit} />
+        </div>
       </section>
     </main>
   );

@@ -17,7 +17,7 @@ Stakeholders:
 **Goals:**
 - Deliver a first-pass index page design with the same aesthetic foundations as the landing page (background treatment, typography, color usage).
 - Render a centered, prominent prompt window pattern that is interactive for typing text.
-- Display logo and short CTA above the prompt box.
+- Display the logo in a top-left header region and keep concise CTA guidance in the main content above the prompt box.
 - Keep implementation small, local, and easy to extend.
 
 **Non-Goals:**
@@ -91,6 +91,17 @@ IndexPage (app/src/app/page.tsx)
     - Defaults: `minLines = 1` and `maxLines = 10` when not explicitly provided.
     - Behavior at max: once content height reaches the max-line cap, textarea uses internal vertical scrolling for overflow.
 
+13. **Top bar separates branding/navigation from main composition**
+    - Decision: introduce a dedicated top bar with the logo anchored at the top-left and a simple navigation slot, separated from main content by a translucent 1px divider.
+    - Rationale: prepares future primary navigation while keeping the prompt experience focused and visually structured.
+    - Scope note: top navigation remains minimal/placeholder in MVP and introduces no backend behavior.
+    - Visual treatment: use the shared cyan→violet→pink gradient for the 1px divider to preserve brand continuity.
+
+14. **BrandLogo supports ratio-preserving explicit sizing**
+    - Decision: update `BrandLogo` to accept optional `width` and `height` props and derive the missing dimension from the default logo aspect ratio when only one prop is provided.
+    - Rationale: enables predictable reuse across header/nav contexts while preventing distortion.
+    - Defaults: retain the existing default logo dimensions when neither prop is provided.
+
 ## Risks / Trade-offs
 
 - **[Risk] Partial visual drift from landing page despite reuse intent** → **Mitigation:** explicitly map reused tokens/values and validate side-by-side during implementation.
@@ -103,7 +114,8 @@ IndexPage (app/src/app/page.tsx)
 1. Update index page markup/components in `app/src/app/page.tsx`.
 2. Update/add focused styles in `app/src/app/page.module.css` and minimal global token reuse in `app/src/app/globals.css` if necessary.
 3. Run frontend app and verify:
-   - logo + CTA appear above prompt box,
+   - logo appears in top-left top bar and CTA remains in main content,
+   - top bar is separated from main area by a translucent 1px divider,
    - prompt field is centered and typeable,
    - submit click shows a transient moving-gradient loading animation,
    - no network/backend dependency is introduced.
