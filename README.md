@@ -1,7 +1,7 @@
 <div align="center">
 <h1>
   <br>
-  <img src="./assets/linopress-logotype.svg" alt="Linopress" width="500">
+  <img src="./assets/linopress-logotype-v2.svg" alt="Linopress" width="500">
 </h1>
 
 <h4>
