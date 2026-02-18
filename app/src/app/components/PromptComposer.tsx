@@ -9,7 +9,7 @@ type PromptComposerProps = {
   maxLines?: number;
 };
 
-const DEFAULT_MIN_LINES = 1;
+const DEFAULT_MIN_LINES = 2;
 const DEFAULT_MAX_LINES = 10;
 
 function getLineHeightPx(element: HTMLTextAreaElement): number {
