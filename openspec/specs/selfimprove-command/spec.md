@@ -1,4 +1,10 @@
-## ADDED Requirements
+# Selfimprove Command Specification
+
+## Purpose
+
+Define the `linopress selfimprove` command behavior for running self-review and improvement loops against existing site stacks.
+
+## Requirements
 
 ### Requirement: Provide a selfimprove CLI command
 
