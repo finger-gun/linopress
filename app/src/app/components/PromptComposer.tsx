@@ -1,6 +1,15 @@
-import { FormEvent, useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import styles from "./PromptComposer.module.css";
 import { PromptActions } from "./PromptActions";
+import { analyzePromptTip, promptTipDefaults } from "./promptTipAnalyzer";
 
 type PromptComposerProps = {
   isSubmitting: boolean;
@@ -11,6 +20,10 @@ type PromptComposerProps = {
 
 const DEFAULT_MIN_LINES = 2;
 const DEFAULT_MAX_LINES = 10;
+const INITIAL_TIP_DELAY_MS = 1000;
+const TIP_DEBOUNCE_MS = 320;
+const TIP_MIN_DWELL_MS = 1800;
+const TIP_MIN_CONFIDENCE = 0.5;
 
 function getLineHeightPx(element: HTMLTextAreaElement): number {
   const computedStyle = window.getComputedStyle(element);
@@ -50,6 +63,11 @@ export function PromptComposer({
   maxLines = DEFAULT_MAX_LINES,
 }: PromptComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [promptText, setPromptText] = useState("");
+  const [hasStartedTyping, setHasStartedTyping] = useState(false);
+  const [activeTip, setActiveTip] = useState(promptTipDefaults.defaultTip);
+  const [activeSince, setActiveSince] = useState<number>(0);
+  const [recentTipIds, setRecentTipIds] = useState<string[]>([]);
 
   const resolvedLineBounds = useMemo(() => {
     const normalizedMin = Math.max(1, Math.floor(minLines));
@@ -90,6 +108,74 @@ export function PromptComposer({
     resizeTextarea();
   }, [resizeTextarea]);
 
+  useEffect(() => {
+    if (hasStartedTyping || promptText.trim().length === 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setHasStartedTyping(true);
+    }, INITIAL_TIP_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [hasStartedTyping, promptText]);
+
+  useEffect(() => {
+    const textareaElement = textareaRef.current;
+
+    if (!textareaElement) {
+      return;
+    }
+
+    const evaluateTip = () => {
+      const now = Date.now();
+      const dwellElapsed = now - activeSince;
+      const excludedTipIds = new Set(recentTipIds.slice(-2));
+
+      const analysis = analyzePromptTip({
+        text: promptText,
+        excludedTipIds,
+      });
+
+      const candidateTip =
+        analysis.confidence < TIP_MIN_CONFIDENCE
+          ? promptTipDefaults.defaultTip
+          : analysis.tip;
+
+      if (candidateTip.id === activeTip.id) {
+        return;
+      }
+
+      if (dwellElapsed < TIP_MIN_DWELL_MS && candidateTip.priority <= activeTip.priority) {
+        return;
+      }
+
+      setActiveTip(candidateTip);
+      setActiveSince(now);
+      setRecentTipIds((previous) => {
+        const next = [...previous, candidateTip.id];
+        return next.slice(-5);
+      });
+    };
+
+    const timeoutId = window.setTimeout(evaluateTip, TIP_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeSince, activeTip.id, activeTip.priority, promptText, recentTipIds]);
+
+  const handleInput = () => {
+    resizeTextarea();
+
+    if (textareaRef.current) {
+      const nextValue = textareaRef.current.value;
+      setPromptText(nextValue);
+    }
+  };
+
   return (
     <form className={styles.promptPanel} onSubmit={onSubmit}>
       <div className={styles.promptBar} aria-hidden="true">
@@ -104,8 +190,19 @@ export function PromptComposer({
           name="site-brief"
           placeholder="Build a premium yoga studio site with classes, memberships, and instructor bios."
           rows={resolvedLineBounds.min}
-          onInput={resizeTextarea}
+          onInput={handleInput}
         />
+
+        <p
+          className={`${styles.contextualTip} ${
+            hasStartedTyping ? styles.contextualTipVisible : styles.contextualTipHidden
+          }`}
+          role="status"
+          aria-live="polite"
+          aria-hidden={!hasStartedTyping}
+        >
+          {activeTip.text}
+        </p>
 
         <PromptActions isSubmitting={isSubmitting} />
       </div>

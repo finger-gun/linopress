@@ -60,6 +60,40 @@
   outline: none;
 }
 
+.contextualTip {
+  margin: 0;
+  max-height: 4rem;
+  padding: 0.15rem 1.1rem 0.95rem;
+  font-family: var(--font-geist-mono), "JetBrains Mono", monospace;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: rgba(160, 217, 255, 0.86);
+  overflow: hidden;
+  transition:
+    max-height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.contextualTipHidden {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  transform: translateY(-8px) scale(0.985);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.contextualTipVisible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
 @media (max-width: 640px) {
   .promptPanel {
     border-radius: 14px;
