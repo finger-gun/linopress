@@ -1,0 +1,29 @@
+.cta {
+  font-size: clamp(1.6rem, 5vw, 3.4rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-align: center;
+  text-wrap: balance;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ctaMain {
+  display: block;
+}
+
+.ctaGradient {
+  background: linear-gradient(135deg, #00d9ff 0%, #7c3aed 50%, #f472b6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ctaSubline {
+  display: block;
+  font-size: clamp(0.98rem, 1.8vw, 1.15rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.88);
+}

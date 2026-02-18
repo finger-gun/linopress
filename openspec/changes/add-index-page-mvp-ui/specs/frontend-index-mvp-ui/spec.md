@@ -119,3 +119,15 @@ The reusable brand logo component SHALL accept optional width and height props f
 #### Scenario: No explicit size uses defaults
 - **WHEN** a consumer renders the brand logo without width and height props
 - **THEN** default logo width and height values are used
+
+### Requirement: Component styles are co-located with UI components
+The MVP index page SHALL keep component-specific styles in component-local style modules so style ownership maps directly to UI boundaries and avoids aggregating unrelated component styles into a single monolithic stylesheet.
+
+#### Scenario: Component-specific classes are defined near each component
+- **WHEN** a developer inspects styling for `BrandLogo`, `HeroCta`, `PromptComposer`, and prompt action controls
+- **THEN** each component uses a co-located style module for component-specific classes
+- **AND** shared layout primitives may remain in a page-level stylesheet when broadly reused
+
+#### Scenario: Visual behavior remains unchanged after style redistribution
+- **WHEN** the index page is rendered after style co-location refactor
+- **THEN** existing MVP visual behavior and accessibility semantics remain preserved

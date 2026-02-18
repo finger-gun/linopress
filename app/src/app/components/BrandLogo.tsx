@@ -1,4 +1,5 @@
 import Image from "next/image";
+import styles from "./BrandLogo.module.css";
 
 type BrandLogoProps = {
   width?: number;
@@ -20,6 +21,7 @@ export function BrandLogo({ width, height }: BrandLogoProps) {
 
   return (
     <Image
+      className={styles.brand}
       src="/linopress-logotype-white.svg"
       alt="Linopress"
       width={resolvedWidth}

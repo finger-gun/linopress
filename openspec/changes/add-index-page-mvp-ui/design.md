@@ -102,6 +102,11 @@ IndexPage (app/src/app/page.tsx)
     - Rationale: enables predictable reuse across header/nav contexts while preventing distortion.
     - Defaults: retain the existing default logo dimensions when neither prop is provided.
 
+15. **Component-scoped styling ownership**
+    - Decision: move component-specific CSS classes out of `page.module.css` into co-located CSS modules under `app/src/app/components/`.
+    - Rationale: keeps styling concerns aligned with component boundaries, simplifies maintenance, and reduces cross-component coupling.
+    - Scope rule: keep only page-level structural/layout primitives in `page.module.css`; place component-owned styles beside the corresponding component.
+
 ## Risks / Trade-offs
 
 - **[Risk] Partial visual drift from landing page despite reuse intent** → **Mitigation:** explicitly map reused tokens/values and validate side-by-side during implementation.

@@ -1,4 +1,4 @@
-import styles from "../page.module.css";
+import styles from "./PromptActions.module.css";
 
 type PromptActionsProps = {
   isSubmitting: boolean;

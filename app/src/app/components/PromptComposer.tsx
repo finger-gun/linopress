@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useLayoutEffect, useMemo, useRef } from "react";
-import styles from "../page.module.css";
+import styles from "./PromptComposer.module.css";
 import { PromptActions } from "./PromptActions";
 
 type PromptComposerProps = {

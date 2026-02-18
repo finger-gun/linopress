@@ -1,0 +1,115 @@
+.promptActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.attachmentButton {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: "Outfit", var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.attachmentButton:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.attachmentButton:focus-visible {
+  outline: 2px solid #00d9ff;
+  outline-offset: 2px;
+}
+
+.submitButton {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: linear-gradient(135deg, #00d9ff 0%, #7c3aed 55%, #f472b6 100%);
+  background-size: 100% 100%;
+  background-position: 50% 50%;
+  color: #ffffff;
+  font-family: "Outfit", var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
+}
+
+.submitButtonLoading {
+  background-size: 200% 200%;
+  animation: submitGradientShift 900ms linear infinite;
+  box-shadow:
+    0 10px 26px -14px rgba(124, 58, 237, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.submitButton:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 8px 22px -12px rgba(124, 58, 237, 0.75),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.submitButton:focus-visible {
+  outline: 2px solid #00d9ff;
+  outline-offset: 2px;
+}
+
+.submitButton:active {
+  transform: none;
+}
+
+@keyframes submitGradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (max-width: 640px) {
+  .promptActions {
+    padding: 0.75rem 0.85rem;
+  }
+}

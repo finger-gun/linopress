@@ -1,0 +1,49 @@
+.topBar {
+  z-index: 2;
+  width: 100%;
+  position: relative;
+  backdrop-filter: blur(8px);
+}
+
+.topBar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 217, 255, 0.36) 0%,
+    rgba(124, 58, 237, 0.34) 52%,
+    rgba(244, 114, 182, 0.36) 100%
+  );
+}
+
+.topBarInner {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.topNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topNavItem {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.topNavItem:hover,
+.topNavItem:focus-visible {
+  color: #ffffff;
+}

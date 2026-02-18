@@ -1,4 +1,4 @@
-import styles from "../page.module.css";
+import styles from "./HeroCta.module.css";
 
 export function HeroCta() {
   return (

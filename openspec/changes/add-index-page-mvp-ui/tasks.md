@@ -37,3 +37,9 @@
 ## 7. Header divider visual refinement
 
 - [x] 7.1 Update the top-bar bottom divider to use the shared brand gradient while preserving a translucent 1px separation effect.
+
+## 8. Component style co-location and instruction hardening
+
+- [ ] 8.1 Move component-specific styles from `app/src/app/page.module.css` into co-located component CSS modules and wire imports in each component.
+- [ ] 8.2 Keep only page-level layout/structural styles in `app/src/app/page.module.css` after redistribution.
+- [ ] 8.3 Add general agent instructions in `AGENT.md` requiring component-first UI composition where applicable and co-located component styling by default.
