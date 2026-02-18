@@ -8,7 +8,7 @@ Define the Sisu-based agent runtime that orchestrates LLM-driven WordPress site 
 
 ### Requirement: Sisu-Based Agent Runtime
 
-The system SHALL use the Sisu framework (@sisu-ai/core) as the foundation for agent execution with LLM-driven planning.
+The system SHALL use the Sisu framework (@sisu-ai/core, @sisu-ai/runtime) as the foundation for agent execution with LLM-driven planning.
 
 #### Scenario: Initialize Sisu agent
 
