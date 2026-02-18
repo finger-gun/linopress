@@ -46,26 +46,42 @@ Stakeholders:
    - Decision: typing is local state/DOM only; no fetch/action handlers to external systems.
    - Rationale: aligns with requested scope and avoids premature backend contract decisions.
 
-5. **Component diagram (text)**
+5. **Submit interaction uses transient local loading animation**
+   - Decision: clicking the submit control triggers a short-lived local loading state that animates motion in the existing gradient treatment.
+   - Rationale: improves perceived responsiveness and interaction polish while preserving strict UI-only MVP scope.
+   - Alternative considered: static pressed-state only. Rejected because it provides weaker interaction feedback and less visual continuity with the established gradient identity.
+
+6. **Action-button hover feedback keeps layout position stable**
+   - Decision: attachment and submit controls keep a fixed position on hover (no translate/offset movement), while still allowing color/shadow emphasis.
+   - Rationale: avoids distracting motion and preserves a more stable interaction target during pointer movement.
+
+7. **Refactor index UI into reusable route-local components**
+   - Decision: extract key index UI elements into reusable React components under `app/src/app/components/` and compose them from `app/src/app/page.tsx`.
+   - Rationale: reduces page-level JSX complexity, improves maintainability, and makes hero/composer elements reusable for future route-level expansion.
+   - Alternative considered: keep all JSX in `page.tsx` and only reuse CSS classes. Rejected because it increases coupling and makes future iteration harder.
+
+8. **Component diagram (text)**
 
 ```text
 IndexPage (app/src/app/page.tsx)
-└─ HeroContainer
-   ├─ Logo
-   ├─ CallToActionText
-   └─ PromptWindow
-      └─ PromptInput (native input/textarea, local-only interaction)
+└─ IndexHero
+   ├─ BrandLogo
+   ├─ HeroCta
+   └─ PromptComposer
+      └─ PromptActions
+         ├─ AttachmentButton
+         └─ SubmitButton
 ```
 
-6. **Data models (current and future alignment note)**
+9. **Data models (current and future alignment note)**
    - `SiteSpec`: unchanged by this change; no new fields required because UI does not submit structured generation input yet.
    - `BuildReport`: unchanged; this UI-only modification does not alter build pipeline/report schema.
 
-7. **Tool allowlists and URL allowlists**
+10. **Tool allowlists and URL allowlists**
    - Tool allowlists: unchanged. Change only affects frontend source files under repository workspace.
    - URL allowlist behavior: unchanged. No external navigation or browser policy changes are introduced.
 
-8. **Self-healing loop and fallback policies**
+11. **Self-healing loop and fallback policies**
    - Self-healing loop: unchanged for platform behavior (max bounded repair cycles as defined by system).
    - Fallback policies: not triggered/extended by this UI change; existing platform fallback behavior (including theme/path fallbacks) remains intact.
 
@@ -83,6 +99,7 @@ IndexPage (app/src/app/page.tsx)
 3. Run frontend app and verify:
    - logo + CTA appear above prompt box,
    - prompt field is centered and typeable,
+   - submit click shows a transient moving-gradient loading animation,
    - no network/backend dependency is introduced.
 4. Rollback strategy: revert changed files in `app/src/app/` to previous state (no data migration required).
 

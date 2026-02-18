@@ -14,3 +14,12 @@
 - [x] 3.1 Run local frontend checks to confirm the page compiles and renders with the inherited aesthetic and required hierarchy.
 - [x] 3.2 Manually verify acceptance behaviors: logo + CTA above prompt, centered and prominent prompt field, typeable interaction, and no backend-triggered behavior.
 - [x] 3.3 Keep scope constrained to requested MVP basics; remove any accidental extras before marking implementation complete.
+- [x] 3.4 Update CTA copy to communicate value proposition and keep gradient emphasis on selected buzzwords in the app hero.
+- [x] 3.5 Refine prompt composer so textarea is fully integrated in prompt body and action row includes both attachment and submit controls.
+- [x] 3.6 Update prompt action controls to icon-based circular buttons (`+` attachment, arrow submit) with gradient emphasis on submit and solid styling on attachment.
+- [x] 3.7 Add local submit-button loading feedback with animated gradient motion on click while keeping interaction UI-only (no backend/network call).
+- [x] 3.8 Remove hover position shift from prompt action buttons while retaining non-positional visual hover feedback.
+
+## 4. Reusable component refactor
+
+- [x] 4.1 Extract relevant index-page UI elements into reusable route-local components and compose them from `app/src/app/page.tsx` without changing MVP behavior.
