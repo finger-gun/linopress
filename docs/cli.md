@@ -7,7 +7,7 @@ linopress provision <site-id> [--port 8080] [--browser]
 linopress start <site-id>
 linopress stop <site-id>
 linopress destroy <site-id>
-linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--base-url http://...] [--browser] [--no-browser] [--review] [--review-cycles N] [--no-heal] [--heal-cycles N] [--yolo] [--timeout ms]
+linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--base-url http://...] [--browser] [--no-browser] [--review] [--no-review] [--review-cycles N] [--max-review-pages N] [--no-heal] [--heal-cycles N] [--yolo] [--timeout ms] [--skill-timeout ms]
 ```
 
 ## Build Examples
@@ -33,11 +33,14 @@ linopress build book-author --prompt "Create a playful children's book author si
 - `--browser` Enable browser container for visual validation.
 - `--no-browser` Disable browser validation even if the stack has a browser.
 - `--review` Enable visual review cycles using screenshots.
+- `--no-review` Disable visual review even if defaults enable it.
 - `--review-cycles N` Limit review iterations (default 2).
+- `--max-review-pages N` Limit number of pages/screenshots sent to the reviewer.
 - `--no-heal` Disable self-healing cycles.
 - `--heal-cycles N` Limit self-healing iterations (default 2).
 - `--yolo` Relax some safety checks for faster iteration.
 - `--timeout ms` Global build timeout in milliseconds.
+- `--skill-timeout ms` Per-skill execution timeout in milliseconds.
 
 ## Flags (all commands)
 

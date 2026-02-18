@@ -15,15 +15,18 @@ type ParsedArgs = {
   noBrowser?: boolean;
   noHeal?: boolean;
   review?: boolean;
+  noReview?: boolean;
   yolo?: boolean;
   help?: boolean;
   reviewCycles?: number;
   healCycles?: number;
+  maxReviewPages?: number;
+  skillTimeoutMs?: number;
 };
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--no-heal] [--review] [--yolo] [--timeout ms] [--review-cycles N] [--heal-cycles N]\n`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--review] [--no-review] [--no-heal] [--yolo] [--timeout ms] [--skill-timeout ms] [--review-cycles N] [--max-review-pages N] [--heal-cycles N]\n`,
   );
 };
 
@@ -60,6 +63,11 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
       continue;
     }
 
+    if (value === '--no-review') {
+      parsed.noReview = true;
+      continue;
+    }
+
     if (value === '--yolo') {
       parsed.yolo = true;
       continue;
@@ -69,6 +77,13 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
       const cyclesValue = rest[i + 1];
       i += 1;
       parsed.reviewCycles = cyclesValue ? Number(cyclesValue) : undefined;
+      continue;
+    }
+
+    if (value === '--max-review-pages') {
+      const pagesValue = rest[i + 1];
+      i += 1;
+      parsed.maxReviewPages = pagesValue ? Number(pagesValue) : undefined;
       continue;
     }
 
@@ -104,6 +119,13 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
       const timeoutValue = rest[i + 1];
       i += 1;
       parsed.buildTimeoutMs = timeoutValue ? Number(timeoutValue) : undefined;
+      continue;
+    }
+
+    if (value === '--skill-timeout') {
+      const timeoutValue = rest[i + 1];
+      i += 1;
+      parsed.skillTimeoutMs = timeoutValue ? Number(timeoutValue) : undefined;
       continue;
     }
 
@@ -192,11 +214,13 @@ const main = async () => {
       baseUrl: parsed.baseUrl,
       enableBrowser: parsed.noBrowser ? false : (parsed.browser ?? false),
       enableHealing: parsed.noHeal ? false : true,
-      enableReview: parsed.review ?? false,
+      enableReview: parsed.noReview ? false : (parsed.review ?? false),
       yolo: parsed.yolo,
       buildTimeoutMs: parsed.buildTimeoutMs,
+      skillTimeoutMs: parsed.skillTimeoutMs,
       reviewCycles: parsed.reviewCycles,
       healingCycles: parsed.healCycles,
+      maxReviewPages: parsed.maxReviewPages,
     });
 
     console.log(`\nBuild status: ${report.status}`);

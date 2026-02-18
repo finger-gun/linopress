@@ -437,6 +437,13 @@ The page-builder skill instructs the agent to use WordPress block markup (Gutenb
 
 The reviewer performs a pre-flight content check (missing pages, empty content, menu/front page config), captures screenshots, and asks the LLM to assess visual quality and fix issues. Review runs in cycles (default 2) and limits the number of screenshots to control context size (default 3 pages).
 
+Flags:
+
+- `--review` enable visual review
+- `--no-review` disable visual review
+- `--review-cycles N` set max review cycles
+- `--max-review-pages N` limit pages/screenshots sent to the reviewer
+
 ```mermaid
 sequenceDiagram
     participant O as Orchestrator

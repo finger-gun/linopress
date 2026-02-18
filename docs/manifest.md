@@ -18,6 +18,18 @@ Linopress treats WordPress as infrastructure — not UI.
 
 ---
 
+## Docs Index
+
+- CLI usage and flags: `docs/cli.md`
+- Build pipeline overview: `docs/build-process.md`
+- Build report schema: `docs/build-report.md`
+- SiteSpec format: `docs/site-spec.md`
+- Architecture notes: `docs/architecture.md`
+- Developer guide: `docs/developer-guide.md`
+- Style seeds: `docs/style-seeds.md`
+- Deployment: `docs/deployment.md`
+- Security: `docs/security.md`
+
 ## 2. Core Philosophy
 
 ### Deterministic > Improvised
@@ -42,9 +54,9 @@ If validation fails, Linopress attempts minimal repair cycles before reporting f
 
 Provide strong defaults and style seeds — but allow:
 
-* Parent themes
-* Blank block themes
-* User-selected themes
+- Parent themes
+- Blank block themes
+- User-selected themes
 
 ### Portable Output
 
@@ -56,17 +68,17 @@ No lock-in. Every site is exportable and deploy-anywhere.
 
 Primary:
 
-* Small businesses
-* Freelancers
-* Consultants
-* Personal bloggers
+- Small businesses
+- Freelancers
+- Consultants
+- Personal bloggers
 
 Not targeting (yet):
 
-* Enterprise-scale installations
-* High-traffic infrastructure
-* Multisite networks
-* Large WooCommerce stores
+- Enterprise-scale installations
+- High-traffic infrastructure
+- Multisite networks
+- Large WooCommerce stores
 
 ---
 
@@ -78,14 +90,14 @@ Given a prompt:
 
 Linopress will:
 
-* Provision WordPress in an isolated runtime
-* Install and configure curated plugins
-* Generate and activate a theme
-* Create pages and menus
-* Apply brand styling
-* Validate via wp-cli and browser
-* Capture screenshots
-* Export a deployable bundle
+- Provision WordPress in an isolated runtime
+- Install and configure curated plugins
+- Generate and activate a theme
+- Create pages and menus
+- Apply brand styling
+- Validate via wp-cli and browser
+- Capture screenshots
+- Export a deployable bundle
 
 Without manual intervention.
 
@@ -99,27 +111,27 @@ One site = one isolated environment.
 
 MVP implementation:
 
-* Docker Compose stack
+- Docker Compose stack
 
 Future:
 
-* Kubernetes pod per site
+- Kubernetes pod per site
 
 Per-site stack:
 
-* wordpress (nginx + php-fpm)
-* db (mariadb)
-* agent-api (Sisu runtime + skills)
-* optional: headless Chromium for agent-browser
+- wordpress (nginx + php-fpm)
+- db (mariadb)
+- agent-api (Sisu runtime + skills)
+- optional: headless Chromium for agent-browser
 
 Shared writable volume:
 
-* /var/www/html/wp-content
+- /var/www/html/wp-content
 
 Tooling baseline:
 
-* Monorepo: Turborepo
-* Package manager: pnpm
+- Monorepo: Turborepo
+- Package manager: pnpm
 
 Each environment is disposable and reproducible.
 
@@ -146,17 +158,17 @@ The model never directly edits arbitrary system state.
 
 Minimal allowlisted tool surface:
 
-* wp-cli tool
-* File tool (restricted to wp-content)
-* agent-browser tool
-* Export tool
+- wp-cli tool
+- File tool (restricted to wp-content)
+- agent-browser tool
+- Export tool
 
 Terminal rules:
 
-* Command allowlist only
-* Root-scoped filesystem access
-* No external browsing by default
-* No Docker socket exposure
+- Command allowlist only
+- Root-scoped filesystem access
+- No external browsing by default
+- No Docker socket exposure
 
 ---
 
@@ -164,25 +176,25 @@ Terminal rules:
 
 Initial skill set:
 
-* SiteSpecExtractor
-* wpInstallOrEnsure
-* PluginInstaller
-* ThemeGenerator (parent / blank block / user theme)
-* PageBuilder (block-based content)
-* MenuConfigurator
-* SecurityBaseline
-* SiteValidator (CLI)
-* BrowserSmokeTest
-* ExportBundle
+- SiteSpecExtractor
+- wpInstallOrEnsure
+- PluginInstaller
+- ThemeGenerator (parent / blank block / user theme)
+- PageBuilder (block-based content)
+- MenuConfigurator
+- SecurityBaseline
+- SiteValidator (CLI)
+- BrowserSmokeTest
+- ExportBundle
 
 Future skills:
 
-* WooCommerce
-* Multilingual
-* Performance optimization
-* Migration/import
-* Headless mode
-* Membership systems
+- WooCommerce
+- Multilingual
+- Performance optimization
+- Migration/import
+- Headless mode
+- Membership systems
 
 Skills are composable and extensible.
 
@@ -198,9 +210,9 @@ Three modes:
 
 Linopress ships 2–3 style seeds:
 
-* Design tokens
-* Section patterns
-* Layout archetypes
+- Design tokens
+- Section patterns
+- Layout archetypes
 
 These inspire output but do not restrict it.
 
@@ -230,12 +242,12 @@ It defines product identity.
 
 ## 11. Security Model
 
-* Per-site sandbox isolation
-* Restricted filesystem writes
-* Allowlisted commands only
-* No external browsing (unless explicitly enabled)
-* Secrets stored outside model context
-* Audit logging of tool calls
+- Per-site sandbox isolation
+- Restricted filesystem writes
+- Allowlisted commands only
+- No external browsing (unless explicitly enabled)
+- Secrets stored outside model context
+- Audit logging of tool calls
 
 Security constraints are architectural, not advisory.
 
@@ -245,10 +257,10 @@ Security constraints are architectural, not advisory.
 
 Each site can be exported as:
 
-* wp-content/
-* database.sql
-* manifest.json
-* bundled archive
+- wp-content/
+- database.sql
+- manifest.json
+- bundled archive
 
 Linopress does not own the runtime.
 The user does.
@@ -259,10 +271,10 @@ The user does.
 
 Linopress is not:
 
-* A no-code builder
-* A visual page editor
-* A hosting platform
-* A generic AI coding agent
+- A no-code builder
+- A visual page editor
+- A hosting platform
+- A generic AI coding agent
 
 Linopress is:
 
@@ -282,12 +294,12 @@ A user prompts:
 
 Linopress produces:
 
-* A running preview
-* Generated theme and pages
-* Installed and configured plugins
-* Passing CLI + browser validation
-* Screenshots
-* Export bundle
+- A running preview
+- Generated theme and pages
+- Installed and configured plugins
+- Passing CLI + browser validation
+- Screenshots
+- Export bundle
 
 With zero manual intervention.
 
@@ -297,10 +309,10 @@ With zero manual intervention.
 
 Linopress evolves into:
 
-* A programmable WordPress runtime
-* A composable skill ecosystem
-* A deploy-anywhere artifact generator
-* A versionable site automation engine
+- A programmable WordPress runtime
+- A composable skill ecosystem
+- A deploy-anywhere artifact generator
+- A versionable site automation engine
 
 Gutenberg made WordPress composable.
 
