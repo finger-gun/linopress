@@ -25,7 +25,7 @@ The system SHALL resolve the target site using the following rules: if exactly o
 
 ### Requirement: Support creativeness control
 
-The system SHALL accept a `--creativeness <1-5>` setting for `linopress selfimprove` where higher values allow the agent to take more liberties in its improvement attempts and may increase improvement cycles or adjust acceptance thresholds, without exceeding existing safety limits. The default creativeness MUST be more aggressive than the build flow default.
+The system SHALL accept a `--creativeness <1-5>` setting for `linopress selfimprove` where higher values allow the agent to take more liberties in its improvement attempts and may increase improvement cycles or adjust acceptance thresholds, without exceeding existing safety limits. The default creativeness MUST be 4 and more aggressive than the build flow default.
 
 #### Scenario: Creativeness provided
 
@@ -35,7 +35,7 @@ The system SHALL accept a `--creativeness <1-5>` setting for `linopress selfimpr
 #### Scenario: Creativeness default
 
 - **WHEN** the user runs `linopress selfimprove` without `--creativeness`
-- **THEN** the system applies a default that is more aggressive than the build flow
+- **THEN** the system applies a default creativeness of 4, which is more aggressive than the build flow
 
 ### Requirement: Perform multi-perspective review before improvements
 
