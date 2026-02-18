@@ -93,7 +93,7 @@ export function PromptComposer({
   return (
     <form className={styles.promptPanel} onSubmit={onSubmit}>
       <div className={styles.promptBar} aria-hidden="true">
-        <span className={styles.promptUrl}>linopress / site brief</span>
+        <span className={styles.promptUrl}>Describe your website</span>
       </div>
 
       <div className={styles.promptBody}>

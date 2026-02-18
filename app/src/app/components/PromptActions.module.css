@@ -10,7 +10,7 @@
 
 .attachmentButton {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: none;
   border-radius: 999px;
   width: 2.5rem;
   height: 2.5rem;
