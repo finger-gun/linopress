@@ -28,7 +28,7 @@ type ParsedArgs = {
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--review] [--no-review] [--no-heal] [--yolo] [--timeout ms] [--skill-timeout ms] [--review-cycles N] [--max-review-pages N] [--heal-cycles N]\n  linopress update [--site <site-id>] --prompt "..." [--base-url http://localhost:8080] [--browser] [--no-browser] [--no-heal] [--timeout ms] [--skill-timeout ms]\n\nExamples:\n  linopress update --prompt "Change the background to white"\n  linopress update --site yoga-studio --prompt "Center the navigation"\n`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--review] [--no-review] [--no-heal] [--yolo] [--timeout ms] [--skill-timeout ms] [--review-cycles N] [--max-review-pages N] [--heal-cycles N]\n  linopress update [--site <site-id>] --prompt "..." [--base-url http://localhost:8080] [--browser] [--no-browser] [--review] [--no-review] [--timeout ms] [--skill-timeout ms] [--review-cycles N]\n\nExamples:\n  linopress update --prompt "Change the background to white"\n  linopress update --site yoga-studio --prompt "Center the navigation"\n`,
   );
 };
 
@@ -202,8 +202,11 @@ const main = async () => {
       baseUrl: parsed.baseUrl,
       enableBrowser: parsed.noBrowser ? false : (parsed.browser ?? false),
       enableHealing: parsed.noHeal ? false : true,
+      enableReview: parsed.noReview ? false : (parsed.review ?? false),
       updateTimeoutMs: parsed.buildTimeoutMs,
       skillTimeoutMs: parsed.skillTimeoutMs,
+      reviewCycles: parsed.reviewCycles,
+      maxReviewPages: parsed.maxReviewPages,
     });
 
     console.log(`\nUpdate status: ${report.status}`);
@@ -226,6 +229,9 @@ const main = async () => {
       for (const err of report.errors) {
         console.log(`- ${err.message}`);
       }
+    }
+    if (report.summary) {
+      console.log('\n' + report.summary);
     }
     return;
   }
