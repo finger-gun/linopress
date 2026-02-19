@@ -17,7 +17,7 @@ export function PromptActions({ isSubmitting }: PromptActionsProps) {
         aria-label="Submit prompt"
         aria-busy={isSubmitting}
       >
-        <span aria-hidden="true">→</span>
+        <span aria-hidden="true">↑</span>
       </button>
     </div>
   );
