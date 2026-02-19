@@ -107,6 +107,11 @@ IndexPage (app/src/app/page.tsx)
     - Rationale: keeps styling concerns aligned with component boundaries, simplifies maintenance, and reduces cross-component coupling.
     - Scope rule: keep only page-level structural/layout primitives in `page.module.css`; place component-owned styles beside the corresponding component.
 
+16. **Prompt window upper/lower glow accents match landing page language**
+    - Decision: add subtle decorative glow accents to the top and bottom of the prompt window shell, mirroring the landing-page prompt treatment.
+    - Rationale: improves visual continuity between marketing and app surfaces while keeping MVP interaction behavior unchanged.
+    - Scope rule: implement as non-interactive visual layers in `PromptComposer` styles only.
+
 ## Risks / Trade-offs
 
 - **[Risk] Partial visual drift from landing page despite reuse intent** → **Mitigation:** explicitly map reused tokens/values and validate side-by-side during implementation.

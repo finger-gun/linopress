@@ -1,5 +1,5 @@
 .brand {
-  width: clamp(140px, 16vw, 200px);
+  width: clamp(140px, 16vw, 150px);
   height: auto;
   opacity: 0.95;
 }

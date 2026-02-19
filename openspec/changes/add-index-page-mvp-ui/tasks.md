@@ -20,6 +20,7 @@
 - [x] 3.7 Add local submit-button loading feedback with animated gradient motion on click while keeping interaction UI-only (no backend/network call).
 - [x] 3.8 Remove hover position shift from prompt action buttons while retaining non-positional visual hover feedback.
 - [x] 3.9 Add prompt textarea autosizing that grows with content between configurable min/max line bounds (defaults: min 1, max 10).
+- [x] 3.10 Add subtle upper and lower decorative glow accents to the prompt window, aligned with landing-page prompt styling.
 
 ## 4. Reusable component refactor
 

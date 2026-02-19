@@ -81,7 +81,7 @@ The index page SHALL render a dedicated top bar where the product logo appears a
 - **AND** the prompt composer remains the central typeable interaction in the main viewport area
 
 ### Requirement: Prompt composer feels integrated and includes core actions
-The prompt window SHALL present the textarea as an integrated part of the composer body and provide an action row beneath it with both attachment and submit controls. The submit control SHALL provide local visual loading feedback on click using motion in the shared gradient treatment.
+The prompt window SHALL present the textarea as an integrated part of the composer body and provide an action row beneath it with both attachment and submit controls. The submit control SHALL provide local visual loading feedback on click using motion in the shared gradient treatment. The prompt window SHALL also render subtle upper and lower glow accents aligned with the landing-page prompt styling language.
 
 #### Scenario: Action row includes attachments and submit controls
 - **WHEN** a user inspects the prompt action area below the textarea
@@ -96,6 +96,12 @@ The prompt window SHALL present the textarea as an integrated part of the compos
 - **THEN** the submit control enters a transient loading state with animated gradient motion feedback
 - **AND** the loading state exits automatically after a short duration without backend requests
 - **AND** the control remains keyboard-focusable with accessible naming preserved
+
+#### Scenario: Prompt window shows upper and lower glow accents
+- **WHEN** a user views the prompt window shell on initial render
+- **THEN** the prompt window includes a subtle top glow accent and a subtle bottom glow accent
+- **AND** both glow accents visually match the landing-page prompt window style language
+- **AND** the glow accents remain decorative-only and do not change UI-only MVP behavior
 
 #### Scenario: Prompt textarea auto-resizes within configurable line bounds
 - **WHEN** a user types multiline content in the prompt textarea
