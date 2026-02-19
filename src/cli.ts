@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import { provisionStack, assertSiteId } from './stack/provision.js';
+import { provisionStack } from './stack/provision.js';
 import { destroyStack, startStack, stopStack } from './stack/lifecycle.js';
-import { assertStackExists, listStacks } from './stack/compose.js';
+import { resolveSiteId } from './cli/site-selection.js';
 import { buildFromInput } from './build/orchestrator.js';
 import { updateFromInput } from './update/orchestrator.js';
+import { selfImproveFromInput } from './selfimprove/orchestrator.js';
 
 type ParsedArgs = {
   siteId?: string;
@@ -24,30 +25,13 @@ type ParsedArgs = {
   healCycles?: number;
   maxReviewPages?: number;
   skillTimeoutMs?: number;
+  creativeness?: number;
+  aggressive?: boolean;
 };
 
 const printUsage = () => {
   console.log(
-    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--review] [--no-review] [--no-heal] [--yolo] [--timeout ms] [--skill-timeout ms] [--review-cycles N] [--max-review-pages N] [--heal-cycles N]\n  linopress update [--site <site-id>] --prompt "..." [--base-url http://localhost:8080] [--browser] [--no-browser] [--review] [--no-review] [--timeout ms] [--skill-timeout ms] [--review-cycles N]\n\nExamples:\n  linopress update --prompt "Change the background to white"\n  linopress update --site yoga-studio --prompt "Center the navigation"\n`,
-  );
-};
-
-const resolveUpdateSiteId = async (requested?: string) => {
-  if (requested) {
-    assertSiteId(requested);
-    await assertStackExists(requested);
-    return requested;
-  }
-
-  const stacks = await listStacks();
-  if (stacks.length === 1) {
-    return stacks[0];
-  }
-  if (stacks.length === 0) {
-    throw new Error('No stacks found. Provide --site or run linopress provision/build first.');
-  }
-  throw new Error(
-    `Multiple stacks found (${stacks.join(', ')}). Provide --site to select a target.`,
+    `\nLinopress CLI\n\nUsage:\n  linopress provision <site-id> [--port 8080] [--browser]\n  linopress start <site-id>\n  linopress stop <site-id>\n  linopress destroy <site-id>\n  linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--browser] [--no-browser] [--review] [--no-review] [--no-heal] [--yolo] [--timeout ms] [--skill-timeout ms] [--review-cycles N] [--max-review-pages N] [--heal-cycles N]\n  linopress update [--site <site-id>] --prompt "..." [--base-url http://localhost:8080] [--browser] [--no-browser] [--review] [--no-review] [--timeout ms] [--skill-timeout ms] [--review-cycles N]\n  linopress selfimprove [--site <site-id>] [--base-url http://localhost:8080] [--creativeness 1-5] [--aggressive]\n\nExamples:\n  linopress update --prompt "Change the background to white"\n  linopress update --site yoga-studio --prompt "Center the navigation"\n  linopress selfimprove --site yoga-studio --creativeness 5\n`,
   );
 };
 
@@ -150,6 +134,18 @@ const parseArgs = (args: string[]): { command?: string; parsed: ParsedArgs } => 
       continue;
     }
 
+    if (value === '--creativeness') {
+      const creativenessValue = rest[i + 1];
+      i += 1;
+      parsed.creativeness = creativenessValue ? Number(creativenessValue) : undefined;
+      continue;
+    }
+
+    if (value === '--aggressive') {
+      parsed.aggressive = true;
+      continue;
+    }
+
     if (value === '--port') {
       const portValue = rest[i + 1];
       i += 1;
@@ -190,7 +186,7 @@ const main = async () => {
 
     let siteId: string;
     try {
-      siteId = await resolveUpdateSiteId(parsed.siteId);
+      siteId = await resolveSiteId(parsed.siteId, { commandLabel: 'update' });
     } catch (error) {
       console.error(error instanceof Error ? error.message : error);
       process.exit(1);
@@ -210,6 +206,53 @@ const main = async () => {
     });
 
     console.log(`\nUpdate status: ${report.status}`);
+    console.log(
+      `Steps: ${report.steps.filter((step) => step.status === 'success').length}/${report.steps.length} complete`,
+    );
+    if (report.status !== 'success') {
+      const failedSteps = report.steps
+        .filter((step) => step.status === 'failed')
+        .map((step) => step.id);
+      if (failedSteps.length) {
+        console.log(`Failed steps: ${failedSteps.join(', ')}`);
+      }
+      console.log(
+        `Validation: db=${report.validation.cli.databaseOk} fs=${report.validation.cli.filesystemOk} health=${report.validation.cli.healthCheckOk} browserErrors=${report.validation.browser.consoleErrors.length}`,
+      );
+    }
+    if (report.errors?.length) {
+      console.log('Errors:');
+      for (const err of report.errors) {
+        console.log(`- ${err.message}`);
+      }
+    }
+    if (report.summary) {
+      console.log('\n' + report.summary);
+    }
+    return;
+  }
+
+  if (command === 'selfimprove') {
+    let siteId: string;
+    try {
+      siteId = await resolveSiteId(parsed.siteId, { commandLabel: 'selfimprove' });
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+
+    const creativeness = parsed.aggressive ? 5 : parsed.creativeness;
+    const report = await selfImproveFromInput({
+      siteId,
+      baseUrl: parsed.baseUrl,
+      creativeness,
+      reviewCycles: parsed.reviewCycles,
+      maxReviewPages: parsed.maxReviewPages,
+      selfImproveTimeoutMs: parsed.buildTimeoutMs,
+      skillTimeoutMs: parsed.skillTimeoutMs,
+    });
+
+    console.log(`\nSelfimprove status: ${report.status}`);
     console.log(
       `Steps: ${report.steps.filter((step) => step.status === 'success').length}/${report.steps.length} complete`,
     );

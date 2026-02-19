@@ -12,6 +12,7 @@ test('buildManifest returns required fields', () => {
     buildReport: {
       siteId: 'demo',
       status: 'success',
+      mode: 'build',
       steps: [],
       validation: {
         cli: { databaseOk: true, filesystemOk: true, healthCheckOk: true },

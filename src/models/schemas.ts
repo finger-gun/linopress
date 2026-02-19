@@ -101,7 +101,7 @@ export const updateRequestSchema = z.object({
 export const buildReportSchema = z.object({
   siteId: z.string().min(1),
   status: z.enum(['success', 'failed', 'partial']),
-  mode: z.enum(['build', 'update']),
+  mode: z.enum(['build', 'update', 'selfimprove']),
   steps: z.array(buildStepSchema),
   validation: validationResultSchema,
   screenshots: z.array(z.string().min(1)),
