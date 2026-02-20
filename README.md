@@ -14,7 +14,7 @@ Linopress is an agentic automation layer for WordPress. Describe a site in natur
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-339933?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![SISU](https://img.shields.io/badge/SISU-2.x-339933?&logoColor=white)
 ![AI](https://img.shields.io/badge/AI-Enabled-6f42c1)](https://github.com/finger-gun/sisu)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 </p>
 
