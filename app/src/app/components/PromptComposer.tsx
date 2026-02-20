@@ -5,6 +5,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useReducer,
   useState,
 } from "react";
 import styles from "./PromptComposer.module.css";
@@ -24,6 +25,53 @@ const INITIAL_TIP_DELAY_MS = 1000;
 const TIP_DEBOUNCE_MS = 320;
 const TIP_MIN_DWELL_MS = 1800;
 const TIP_MIN_CONFIDENCE = 0.5;
+
+type TipState = {
+  hasStartedTyping: boolean;
+  activeTip: typeof promptTipDefaults.defaultTip;
+  activeSince: number;
+  recentTipIds: string[];
+};
+
+type TipAction =
+  | { type: "MARK_STARTED_TYPING" }
+  | {
+      type: "SET_ACTIVE_TIP";
+      tip: typeof promptTipDefaults.defaultTip;
+      timestamp: number;
+    };
+
+const initialTipState: TipState = {
+  hasStartedTyping: false,
+  activeTip: promptTipDefaults.defaultTip,
+  activeSince: 0,
+  recentTipIds: [],
+};
+
+function tipReducer(state: TipState, action: TipAction): TipState {
+  switch (action.type) {
+    case "MARK_STARTED_TYPING": {
+      if (state.hasStartedTyping) {
+        return state;
+      }
+
+      return {
+        ...state,
+        hasStartedTyping: true,
+      };
+    }
+    case "SET_ACTIVE_TIP": {
+      return {
+        ...state,
+        activeTip: action.tip,
+        activeSince: action.timestamp,
+        recentTipIds: [...state.recentTipIds, action.tip.id].slice(-5),
+      };
+    }
+    default:
+      return state;
+  }
+}
 
 function getLineHeightPx(element: HTMLTextAreaElement): number {
   const computedStyle = window.getComputedStyle(element);
@@ -64,10 +112,7 @@ export function PromptComposer({
 }: PromptComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [promptText, setPromptText] = useState("");
-  const [hasStartedTyping, setHasStartedTyping] = useState(false);
-  const [activeTip, setActiveTip] = useState(promptTipDefaults.defaultTip);
-  const [activeSince, setActiveSince] = useState<number>(0);
-  const [recentTipIds, setRecentTipIds] = useState<string[]>([]);
+  const [tipState, dispatchTipAction] = useReducer(tipReducer, initialTipState);
 
   const resolvedLineBounds = useMemo(() => {
     const normalizedMin = Math.max(1, Math.floor(minLines));
@@ -109,18 +154,18 @@ export function PromptComposer({
   }, [resizeTextarea]);
 
   useEffect(() => {
-    if (hasStartedTyping || promptText.trim().length === 0) {
+    if (tipState.hasStartedTyping || promptText.trim().length === 0) {
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
-      setHasStartedTyping(true);
+      dispatchTipAction({ type: "MARK_STARTED_TYPING" });
     }, INITIAL_TIP_DELAY_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [hasStartedTyping, promptText]);
+  }, [promptText, tipState.hasStartedTyping]);
 
   useEffect(() => {
     const textareaElement = textareaRef.current;
@@ -131,8 +176,8 @@ export function PromptComposer({
 
     const evaluateTip = () => {
       const now = Date.now();
-      const dwellElapsed = now - activeSince;
-      const excludedTipIds = new Set(recentTipIds.slice(-2));
+      const dwellElapsed = now - tipState.activeSince;
+      const excludedTipIds = new Set(tipState.recentTipIds.slice(-2));
 
       const analysis = analyzePromptTip({
         text: promptText,
@@ -144,19 +189,21 @@ export function PromptComposer({
           ? promptTipDefaults.defaultTip
           : analysis.tip;
 
-      if (candidateTip.id === activeTip.id) {
+      if (candidateTip.id === tipState.activeTip.id) {
         return;
       }
 
-      if (dwellElapsed < TIP_MIN_DWELL_MS && candidateTip.priority <= activeTip.priority) {
+      if (
+        dwellElapsed < TIP_MIN_DWELL_MS &&
+        candidateTip.priority <= tipState.activeTip.priority
+      ) {
         return;
       }
 
-      setActiveTip(candidateTip);
-      setActiveSince(now);
-      setRecentTipIds((previous) => {
-        const next = [...previous, candidateTip.id];
-        return next.slice(-5);
+      dispatchTipAction({
+        type: "SET_ACTIVE_TIP",
+        tip: candidateTip,
+        timestamp: now,
       });
     };
 
@@ -165,7 +212,13 @@ export function PromptComposer({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [activeSince, activeTip.id, activeTip.priority, promptText, recentTipIds]);
+  }, [
+    promptText,
+    tipState.activeSince,
+    tipState.activeTip.id,
+    tipState.activeTip.priority,
+    tipState.recentTipIds,
+  ]);
 
   const handleInput = () => {
     resizeTextarea();
@@ -195,13 +248,13 @@ export function PromptComposer({
 
         <p
           className={`${styles.contextualTip} ${
-            hasStartedTyping ? styles.contextualTipVisible : styles.contextualTipHidden
+            tipState.hasStartedTyping ? styles.contextualTipVisible : styles.contextualTipHidden
           }`}
           role="status"
           aria-live="polite"
-          aria-hidden={!hasStartedTyping}
+          aria-hidden={!tipState.hasStartedTyping}
         >
-          {activeTip.text}
+          {tipState.activeTip.text}
         </p>
 
         <PromptActions isSubmitting={isSubmitting} />
