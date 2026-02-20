@@ -55,3 +55,20 @@ OpenSpec is the source of truth for work. See:
 - Prefer component-first UI construction: when a UI section has distinct responsibility or expected reuse, implement it as a dedicated component instead of expanding page-level JSX.
 - Co-locate component-specific styles with their component (e.g., `Component.tsx` + `Component.module.css`) and avoid centralizing unrelated component styles in a single page stylesheet.
 - Keep page-level styles focused on route layout and shared structural primitives; move visual/interactive details into the owning component stylesheet.
+
+# React Doctor
+
+Run after making React changes to catch issues early. Use when reviewing code, finishing a feature, or fixing bugs in a React project.
+
+Scans your React codebase for security, performance, correctness, and architecture issues. Outputs a 0-100 score with actionable diagnostics.
+
+## Usage
+
+```bash
+npx -y react-doctor@latest . --verbose --diff
+```
+
+## Workflow
+
+Run after making changes to catch issues early. Fix errors first, then re-run to verify the score improved.
+
