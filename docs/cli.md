@@ -8,6 +8,7 @@ linopress start <site-id>
 linopress stop <site-id>
 linopress destroy <site-id>
 linopress build <site-id> [--prompt "..."] [--spec path.json] [--port 8080] [--base-url http://...] [--browser] [--no-browser] [--review] [--no-review] [--review-cycles N] [--max-review-pages N] [--no-heal] [--heal-cycles N] [--yolo] [--timeout ms] [--skill-timeout ms]
+linopress selfimprove [--site <site-id>] [--base-url http://...] [--creativeness 1-5] [--aggressive]
 ```
 
 ## Build Examples
@@ -22,6 +23,16 @@ linopress build yoga-studio --spec ./site-spec.json --port 8080
 
 ```bash
 linopress build book-author --prompt "Create a playful children's book author site" --review --review-cycles 2 --browser
+```
+
+## Selfimprove Examples
+
+```bash
+linopress selfimprove --site yoga-studio
+```
+
+```bash
+linopress selfimprove --site yoga-studio --creativeness 5
 ```
 
 ## Flags (build)
@@ -46,6 +57,11 @@ linopress build book-author --prompt "Create a playful children's book author si
 
 - `--site <site-id>` Alternative way to pass the site id.
 - `--help` or `-h` Show usage.
+
+## Flags (selfimprove)
+
+- `--creativeness 1-5` Controls how aggressive the improvement loop is (default 4).
+- `--aggressive` Shortcut for `--creativeness 5`.
 
 ## Notes
 

@@ -17,6 +17,9 @@ importers:
       '@sisu-ai/core':
         specifier: latest
         version: 2.3.1
+      '@sisu-ai/mw-control-flow':
+        specifier: latest
+        version: 9.0.1(@sisu-ai/core@2.3.1)
       '@sisu-ai/mw-conversation-buffer':
         specifier: latest
         version: 9.0.1(@sisu-ai/core@2.3.1)
@@ -283,6 +286,11 @@ packages:
 
   '@sisu-ai/core@2.3.1':
     resolution: {integrity: sha512-rZN82qUHcbAYQD3mDMqSPe8xTopHbYt5uyDpXpYPK9TLAvcBqk0ieMWzzbkcrYSnDtXbdoByI9mmcn+DVyNrlQ==}
+
+  '@sisu-ai/mw-control-flow@9.0.1':
+    resolution: {integrity: sha512-JlgeYBYAB380GdVmutsdR6smuU4LILUnIuCJlL/1pM6pE/KzSu+4mz10N+X3eD+NOPUT7mVX+F9JkjNqmWbCIQ==}
+    peerDependencies:
+      '@sisu-ai/core': ^2.3.1
 
   '@sisu-ai/mw-conversation-buffer@9.0.1':
     resolution: {integrity: sha512-Qx1tGwPPHKZUg9DvxBxkBRKaIRVGURYIcS/Qzs/0fhesxaDfmiPS5L45xo1jyhwS097zazUKTSRY8rLcxZFLIg==}
@@ -1005,6 +1013,10 @@ snapshots:
       '@sisu-ai/core': 2.3.1
 
   '@sisu-ai/core@2.3.1': {}
+
+  '@sisu-ai/mw-control-flow@9.0.1(@sisu-ai/core@2.3.1)':
+    dependencies:
+      '@sisu-ai/core': 2.3.1
 
   '@sisu-ai/mw-conversation-buffer@9.0.1(@sisu-ai/core@2.3.1)':
     dependencies:

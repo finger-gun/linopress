@@ -6,6 +6,7 @@ test('BuildReport validation accepts complete report', () => {
   const report = validateBuildReport({
     siteId: 'demo',
     status: 'success',
+    mode: 'build',
     steps: [
       {
         id: 'install',

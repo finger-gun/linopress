@@ -5,6 +5,7 @@ import {
   type AgentRuntimeOptions,
   type LlmProvider,
 } from '../agent/runtime.js';
+import { createConsoleLogger, type Logger } from '@sisu-ai/core';
 import type { ToolName } from '../agent/tools.js';
 import { loadPrompt } from '../build/prompts.js';
 import { validateUpdateRequest } from '../models/schemas.js';
@@ -37,6 +38,9 @@ type ValidationResult = BuildReport['validation'];
 
 const UPDATE_TOOL_ALLOWLIST: ToolName[] = ['wp_cli', 'file', 'browser', 'export'];
 const DEFAULT_BASE_URL = (port?: number) => `http://localhost:${port ?? 8080}`;
+const updateLogger = createConsoleLogger({
+  level: (process.env.SISU_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') ?? 'info',
+});
 
 const createSteps = (): BuildStep[] => [
   { id: 'analyze', label: 'Analyze current site', status: 'pending' },
@@ -55,6 +59,7 @@ const updateStep = (steps: BuildStep[], id: string, update: Partial<BuildStep>) 
 };
 
 const markStep = (
+  logger: Logger,
   steps: BuildStep[],
   id: string,
   status: BuildStep['status'],
@@ -66,7 +71,7 @@ const markStep = (
     ...(status === 'in_progress' ? { startedAt: now } : { finishedAt: now }),
     details,
   });
-  console.log(`[update] ${id} -> ${status}`);
+  logger.info(`[update] ${id} -> ${status}`);
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -261,7 +266,7 @@ const capturePageScreenshots = async (siteId: string, baseUrl: string) => {
       screenshotPaths.push({ page: 'home', path: result.path });
     }
   } catch (error) {
-    console.log(
+    updateLogger.warn(
       `[review] Failed to capture screenshot: ${error instanceof Error ? error.message : String(error)}`,
     );
   } finally {
@@ -277,7 +282,7 @@ const getScreenshotMeta = async (screenshotPaths: Array<{ page: string; path: st
       const stat = await fs.stat(filePath);
       results.push({ page, path: filePath, sizeBytes: stat.size });
     } catch (error) {
-      console.log(
+      updateLogger.warn(
         `[review] Failed to stat screenshot ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
       );
       results.push({ page, path: filePath });
@@ -313,7 +318,7 @@ const screenshotsToBase64 = async (
       results.push({ page, dataUri });
       totalChars = nextTotal;
     } catch (error) {
-      console.log(
+      updateLogger.warn(
         `[review] Failed to read screenshot ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -322,6 +327,7 @@ const screenshotsToBase64 = async (
 };
 
 const runVisualReview = async (
+  logger: Logger,
   runtimeOptions: AgentRuntimeOptions,
   siteId: string,
   baseUrl: string,
@@ -330,25 +336,25 @@ const runVisualReview = async (
   errors: ErrorLog[],
   maxCycles = 2,
 ) => {
-  markStep(steps, 'review', 'in_progress');
+  markStep(logger, steps, 'review', 'in_progress');
   const reviewDetails: Array<{ cycle: number; issuesFound: number; issuesFixed: number }> = [];
 
   for (let cycle = 1; cycle <= maxCycles; cycle += 1) {
-    console.log(`[review] Cycle ${cycle}/${maxCycles}: capturing screenshots...`);
+    logger.info(`[review] Cycle ${cycle}/${maxCycles}: capturing screenshots...`);
 
     const screenshotPaths = await capturePageScreenshots(siteId, baseUrl);
     if (screenshotPaths.length === 0) {
-      console.log('[review] No screenshots captured, skipping visual review');
+      logger.info('[review] No screenshots captured, skipping visual review');
       break;
     }
 
     const screenshotMeta = await getScreenshotMeta(screenshotPaths);
     const maxReviewImages = Math.min(1, screenshotMeta.length);
     const selectedScreenshots = screenshotMeta.slice(0, maxReviewImages);
-    console.log('[review] Using screenshots:');
+    logger.info('[review] Using screenshots:');
     for (const shot of selectedScreenshots) {
       const label = path.basename(shot.path);
-      console.log(`[review]   - ${shot.page}: ${formatBytes(shot.sizeBytes)} (${label})`);
+      logger.info(`[review]   - ${shot.page}: ${formatBytes(shot.sizeBytes)} (${label})`);
     }
 
     const { screenshots, skipped } = await screenshotsToBase64(selectedScreenshots, {
@@ -357,11 +363,11 @@ const runVisualReview = async (
     });
     if (skipped.length > 0) {
       for (const skip of skipped) {
-        console.log(`[review] Skipping ${skip.page} screenshot: ${skip.reason}`);
+        logger.info(`[review] Skipping ${skip.page} screenshot: ${skip.reason}`);
       }
     }
     if (screenshots.length === 0) {
-      console.log('[review] Failed to encode screenshots, skipping visual review');
+      logger.info('[review] Failed to encode screenshots, skipping visual review');
       break;
     }
 
@@ -384,7 +390,7 @@ const runVisualReview = async (
     ];
 
     try {
-      console.log(
+      logger.info(
         `[review] Cycle ${cycle}: sending ${screenshots.length} screenshots to LLM for visual review...`,
       );
       const ctx = runtime.createContext(reviewInstruction);
@@ -409,14 +415,14 @@ const runVisualReview = async (
       }
 
       reviewDetails.push({ cycle, issuesFound, issuesFixed });
-      console.log(`[review] Cycle ${cycle}: found ${issuesFound} issues, fixed ${issuesFixed}`);
+      logger.info(`[review] Cycle ${cycle}: found ${issuesFound} issues, fixed ${issuesFixed}`);
       if (issuesFound === 0) {
-        console.log('[review] Site looks good, no issues found');
+        logger.info('[review] Site looks good, no issues found');
         break;
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.log(`[review] Cycle ${cycle} failed: ${msg}`);
+      logger.error(`[review] Cycle ${cycle} failed: ${msg}`);
       errors.push({
         message: `Review cycle ${cycle}: ${msg}`,
         timestamp: new Date().toISOString(),
@@ -426,7 +432,7 @@ const runVisualReview = async (
     }
   }
 
-  markStep(steps, 'review', 'success', {
+  markStep(logger, steps, 'review', 'success', {
     cycles: reviewDetails,
     totalIssuesFound: reviewDetails.reduce((sum, d) => sum + d.issuesFound, 0),
     totalIssuesFixed: reviewDetails.reduce((sum, d) => sum + d.issuesFixed, 0),
@@ -515,6 +521,8 @@ const createThemeReader = (siteId: string) => {
 };
 
 type UpdateSnapshot = {
+  homeId?: string;
+  themeSlug?: string;
   content: Record<string, string>;
   files: Record<string, string>;
 };
@@ -590,7 +598,7 @@ const captureUpdateSnapshot = async (siteId: string): Promise<UpdateSnapshot> =>
     ).stdout;
   }
 
-  return { content, files };
+  return { homeId, themeSlug, content, files };
 };
 
 const diffSnapshots = (before: UpdateSnapshot, after: UpdateSnapshot) => {
@@ -609,6 +617,178 @@ const diffSnapshots = (before: UpdateSnapshot, after: UpdateSnapshot) => {
     }
   }
   return changes;
+};
+
+const findHomeIdFromSnapshot = (snapshot: UpdateSnapshot) => {
+  if (snapshot.homeId) return snapshot.homeId;
+  const postKey = Object.keys(snapshot.content).find((key) => key.startsWith('post:'));
+  return postKey ? postKey.replace('post:', '') : undefined;
+};
+
+const buildAnalysisFromSnapshot = (snapshot: UpdateSnapshot) => {
+  const homeId = findHomeIdFromSnapshot(snapshot) ?? null;
+  const homeContent = homeId ? (snapshot.content[`post:${homeId}`] ?? '') : '';
+  const homeSource = homeContent && homeContent.trim().length > 20 ? 'post' : 'template';
+  const templateFiles = Object.keys(snapshot.files).filter((path) => path.includes('/templates/'));
+  const templatePartFiles = Object.keys(snapshot.files).filter((path) => path.includes('/parts/'));
+  const reusableBlockIds = Object.keys(snapshot.content)
+    .filter((key) => key.startsWith('wp_block:'))
+    .map((key) => key.replace('wp_block:', ''));
+  const needs: string[] = [];
+  if (Object.keys(snapshot.files).some((path) => path.endsWith('/theme.json'))) {
+    needs.push('theme.json');
+  }
+  if (templateFiles.length > 0) needs.push('template');
+  if (homeId) needs.push('post');
+  if (reusableBlockIds.length > 0) needs.push('reusable_block');
+  if (needs.length === 0) needs.push('unknown');
+
+  return {
+    homeId,
+    homeSource,
+    themeSlug: snapshot.themeSlug ?? 'unknown-theme',
+    templateFiles,
+    templatePartFiles,
+    reusableBlockIds,
+    notes: ['analysis fallback: derived from snapshot'],
+    needs,
+  };
+};
+
+const pickTemplateTarget = (snapshot: UpdateSnapshot) =>
+  Object.keys(snapshot.files).find((path) => path.endsWith('/templates/front-page.html')) ??
+  Object.keys(snapshot.files).find((path) => path.endsWith('/templates/home.html')) ??
+  Object.keys(snapshot.files).find((path) => path.endsWith('/templates/index.html'));
+
+const buildPlanFromSnapshot = (analysis: any, snapshot: UpdateSnapshot, prompt: string) => {
+  const targets: Array<{ type: string; id?: string; path?: string; action: string }> = [];
+  const operations: string[] = [];
+  const fallbacks: string[] = [];
+
+  const homeId = analysis?.homeId || findHomeIdFromSnapshot(snapshot);
+  const themeJsonPath = Object.keys(snapshot.files).find((path) => path.endsWith('/theme.json'));
+  const templatePath = pickTemplateTarget(snapshot);
+
+  if (wantsBlackBackground(prompt) || wantsTextColorUpdate(prompt)) {
+    if (themeJsonPath) {
+      targets.push({ type: 'file', path: themeJsonPath, action: 'update_theme_json_colors' });
+      operations.push('Update theme.json background/text colors');
+    } else if (templatePath) {
+      targets.push({ type: 'file', path: templatePath, action: 'wrap_post_content_group' });
+      operations.push('Wrap post content in a black background group in template');
+    } else if (homeId) {
+      targets.push({ type: 'post', id: String(homeId), action: 'update_post_content' });
+      operations.push('Inject black background group into homepage content');
+    }
+  }
+
+  if (wantsRemoveLargeImage(prompt)) {
+    if (templatePath) {
+      targets.push({ type: 'file', path: templatePath, action: 'remove_first_cover_or_image' });
+      operations.push('Remove first cover/image block in template');
+    } else if (homeId) {
+      targets.push({ type: 'post', id: String(homeId), action: 'remove_first_cover_or_image' });
+      operations.push('Remove first cover/image block in homepage content');
+    }
+  }
+
+  fallbacks.push('If target missing, choose next available source (theme.json → template → post).');
+  fallbacks.push('If no writes are possible, report no-change failure.');
+
+  return { targets, operations, fallbacks };
+};
+
+const wantsBlackBackground = (prompt: string) =>
+  /background\s+to\s+black|black\s+background/i.test(prompt);
+const wantsTextColorUpdate = (prompt: string) => /text\s+color|contrast|readability/i.test(prompt);
+const wantsRemoveLargeImage = (prompt: string) =>
+  /remove\s+.*image|remove\s+.*cover|large\s+image/i.test(prompt);
+
+const removeFirstBlock = (content: string, blockName: string) => {
+  const blockPattern = new RegExp(
+    `<!--\\s*wp:${blockName}[^]*?<!--\\s*\\/wp:${blockName}\\s*-->`,
+    'i',
+  );
+  if (blockPattern.test(content)) {
+    return content.replace(blockPattern, '').trim();
+  }
+  const selfClosing = new RegExp(`<!--\\s*wp:${blockName}[^]*?\\/\\s*-->`, 'i');
+  if (selfClosing.test(content)) {
+    return content.replace(selfClosing, '').trim();
+  }
+  return content;
+};
+
+const wrapPostContentWithGroup = (content: string) => {
+  const marker = '<!-- wp:post-content /-->';
+  if (!content.includes(marker)) return content;
+  const groupOpen =
+    '<!-- wp:group {"style":{"color":{"background":"#000000","text":"#ffffff"}},"layout":{"type":"constrained"}} -->\n' +
+    '<div class="wp-block-group" style="background-color:#000000;color:#ffffff">';
+  const groupClose = '</div>\n<!-- /wp:group -->';
+  return content.replace(marker, `${groupOpen}\n${marker}\n${groupClose}`);
+};
+
+const applyDeterministicFallback = async (
+  siteId: string,
+  prompt: string,
+  snapshot: UpdateSnapshot,
+) => {
+  const fileTool = createFileTool();
+  const writes: string[] = [];
+  const wantsBackground = wantsBlackBackground(prompt);
+  const wantsText = wantsTextColorUpdate(prompt);
+  const wantsRemoveImage = wantsRemoveLargeImage(prompt);
+
+  const themeJsonPath = Object.keys(snapshot.files).find((path) => path.endsWith('/theme.json'));
+  if (themeJsonPath && (wantsBackground || wantsText)) {
+    try {
+      const parsed = JSON.parse(snapshot.files[themeJsonPath]);
+      const styles = (parsed.styles ??= {});
+      const color = (styles.color ??= {});
+      if (wantsBackground) {
+        color.background = '#000000';
+      }
+      if (wantsText) {
+        color.text = '#ffffff';
+      }
+      const updated = JSON.stringify(parsed, null, 2);
+      if (updated !== snapshot.files[themeJsonPath]) {
+        await fileTool.handler(
+          { operation: 'write', path: themeJsonPath, siteId, data: updated },
+          {} as never,
+        );
+        writes.push(`file:${themeJsonPath}`);
+      }
+    } catch {
+      // ignore invalid theme.json
+    }
+  }
+
+  const templatePath =
+    Object.keys(snapshot.files).find((path) => path.endsWith('/templates/front-page.html')) ??
+    Object.keys(snapshot.files).find((path) => path.endsWith('/templates/home.html')) ??
+    Object.keys(snapshot.files).find((path) => path.endsWith('/templates/index.html'));
+
+  if (templatePath) {
+    let content = snapshot.files[templatePath];
+    if (wantsRemoveImage) {
+      const withoutCover = removeFirstBlock(content, 'cover');
+      content = withoutCover === content ? removeFirstBlock(content, 'image') : withoutCover;
+    }
+    if (wantsBackground && !themeJsonPath) {
+      content = wrapPostContentWithGroup(content);
+    }
+    if (content !== snapshot.files[templatePath]) {
+      await fileTool.handler(
+        { operation: 'write', path: templatePath, siteId, data: content },
+        {} as never,
+      );
+      writes.push(`file:${templatePath}`);
+    }
+  }
+
+  return writes;
 };
 
 const buildReport = async (params: {
@@ -679,7 +859,7 @@ const generateUpdateSummary = async (
     const text = getAssistantText(ctx);
     return text || undefined;
   } catch (error) {
-    console.log(
+    updateLogger.warn(
       `[summary] Failed to generate update summary: ${error instanceof Error ? error.message : String(error)}`,
     );
     return undefined;
@@ -712,6 +892,7 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
   const startedAt = new Date().toISOString();
   const errors: ErrorLog[] = [];
   const steps = createSteps();
+  const logger = updateLogger;
 
   await assertStackExists(updateRequest.siteId);
   const baseUrl = await resolveBaseUrl(updateRequest.siteId, input.baseUrl);
@@ -723,6 +904,8 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
     skillsDir: input.skillsDir,
     skillTimeoutMs: input.skillTimeoutMs,
     toolAllowlist: [...UPDATE_TOOL_ALLOWLIST],
+    useControlFlow: true,
+    controlFlowMaxLoops: 6,
   };
 
   const runtime = createAgentRuntime(runtimeOptions);
@@ -733,7 +916,7 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
   let analysis: unknown;
   let plan: unknown;
 
-  markStep(steps, 'analyze', 'in_progress');
+  markStep(logger, steps, 'analyze', 'in_progress');
   try {
     const analyzeInstruction = await loadPrompt('update-analyze', {
       prompt: updateRequest.prompt,
@@ -744,9 +927,12 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
     const analyzeText = getAssistantText(analyzeCtx);
     analysis = parseJsonFromText(analyzeText);
     if (!analysis) {
-      throw new Error('Update analysis did not return valid JSON');
+      analysis = buildAnalysisFromSnapshot(beforeSnapshot);
+      updateLogger.warn('[update] Analysis fallback used (non-JSON output).');
+      markStep(logger, steps, 'analyze', 'success', { analysis, fallback: true });
+    } else {
+      markStep(logger, steps, 'analyze', 'success', { analysis });
     }
-    markStep(steps, 'analyze', 'success', { analysis });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     errors.push({
@@ -754,12 +940,12 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
       timestamp: new Date().toISOString(),
       code: 'step_analyze_error',
     });
-    markStep(steps, 'analyze', 'failed', { error: msg });
+    markStep(logger, steps, 'analyze', 'failed', { error: msg });
     updateOk = false;
   }
 
   if (updateOk) {
-    markStep(steps, 'plan', 'in_progress');
+    markStep(logger, steps, 'plan', 'in_progress');
     try {
       const planInstruction = await loadPrompt('update-plan', {
         prompt: updateRequest.prompt,
@@ -769,9 +955,12 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
       const planText = getAssistantText(planCtx);
       plan = parseJsonFromText(planText);
       if (!plan) {
-        throw new Error('Update plan did not return valid JSON');
+        plan = buildPlanFromSnapshot(analysis, beforeSnapshot, updateRequest.prompt);
+        updateLogger.warn('[update] Plan fallback used (non-JSON output).');
+        markStep(logger, steps, 'plan', 'success', { plan, fallback: true });
+      } else {
+        markStep(logger, steps, 'plan', 'success', { plan });
       }
-      markStep(steps, 'plan', 'success', { plan });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       errors.push({
@@ -779,15 +968,15 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
         timestamp: new Date().toISOString(),
         code: 'step_plan_error',
       });
-      markStep(steps, 'plan', 'failed', { error: msg });
+      markStep(logger, steps, 'plan', 'failed', { error: msg });
       updateOk = false;
     }
   } else {
-    markStep(steps, 'plan', 'failed', { skipped: true });
+    markStep(logger, steps, 'plan', 'failed', { skipped: true });
   }
 
   if (updateOk) {
-    markStep(steps, 'apply', 'in_progress');
+    markStep(logger, steps, 'apply', 'in_progress');
     try {
       const applyInstruction = await loadPrompt('update-apply', {
         prompt: updateRequest.prompt,
@@ -796,13 +985,28 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
       const applyCtx = await runtime.run(applyInstruction);
       const applyText = getAssistantText(applyCtx);
       const applyResult = parseJsonFromText(applyText);
-      markStep(steps, 'apply', 'success', { result: applyResult });
+      markStep(logger, steps, 'apply', 'success', { result: applyResult });
       const afterSnapshot = await captureUpdateSnapshot(updateRequest.siteId);
       changeSummary = diffSnapshots(beforeSnapshot, afterSnapshot);
+
+      let fallbackWrites: string[] = [];
+      if (changeSummary.length === 0) {
+        fallbackWrites = await applyDeterministicFallback(
+          updateRequest.siteId,
+          updateRequest.prompt,
+          afterSnapshot,
+        );
+        if (fallbackWrites.length > 0) {
+          const fallbackSnapshot = await captureUpdateSnapshot(updateRequest.siteId);
+          changeSummary = diffSnapshots(beforeSnapshot, fallbackSnapshot);
+        }
+      }
+
       updateStep(steps, 'apply', {
         details: {
           result: applyResult,
           changes: changeSummary,
+          fallbackWrites,
           changeSummaryEmpty: changeSummary.length === 0,
         },
       });
@@ -812,6 +1016,8 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
           timestamp: new Date().toISOString(),
           code: 'update_no_changes_detected',
         });
+        markStep(logger, steps, 'apply', 'failed', { noChanges: true });
+        updateOk = false;
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -820,11 +1026,11 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
         timestamp: new Date().toISOString(),
         code: 'step_apply_error',
       });
-      markStep(steps, 'apply', 'failed', { error: msg });
+      markStep(logger, steps, 'apply', 'failed', { error: msg });
       updateOk = false;
     }
   } else {
-    markStep(steps, 'apply', 'failed', { skipped: true });
+    markStep(logger, steps, 'apply', 'failed', { skipped: true });
   }
 
   let validation: ValidationResult = {
@@ -836,6 +1042,7 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
   const reviewEnabled = input.enableReview ?? false;
   if (updateOk && reviewEnabled) {
     await runVisualReview(
+      logger,
       runtimeOptions,
       updateRequest.siteId,
       baseUrl,
@@ -845,11 +1052,11 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
       input.reviewCycles ?? 4,
     );
   } else {
-    markStep(steps, 'review', 'success', { skipped: !reviewEnabled || !updateOk });
+    markStep(logger, steps, 'review', 'success', { skipped: !reviewEnabled || !updateOk });
   }
 
   if (updateOk) {
-    markStep(steps, 'validate', 'in_progress');
+    markStep(logger, steps, 'validate', 'in_progress');
     const validationResult = await updateValidation(
       updateRequest.siteId,
       baseUrl,
@@ -857,9 +1064,9 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
     );
     validation = validationResult.validation;
     screenshots = validationResult.screenshots;
-    markStep(steps, 'validate', 'success');
+    markStep(logger, steps, 'validate', 'success');
   } else {
-    markStep(steps, 'validate', 'failed', { skipped: true });
+    markStep(logger, steps, 'validate', 'failed', { skipped: true });
   }
 
   const healingCycles: HealingCycle[] = [];
@@ -870,7 +1077,7 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
     validation.browser.consoleErrors.length === 0;
 
   if (updateOk && !validationOk && input.enableHealing) {
-    markStep(steps, 'heal', 'in_progress');
+    markStep(logger, steps, 'heal', 'in_progress');
     const maxHealCycles = 2;
     for (let cycle = 1; cycle <= maxHealCycles; cycle += 1) {
       const cycleStartedAt = new Date().toISOString();
@@ -902,9 +1109,9 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
 
       if (okNow) break;
     }
-    markStep(steps, 'heal', 'success');
+    markStep(logger, steps, 'heal', 'success');
   } else {
-    markStep(steps, 'heal', 'success', { skipped: !input.enableHealing || !updateOk });
+    markStep(logger, steps, 'heal', 'success', { skipped: !input.enableHealing || !updateOk });
   }
 
   const finalOk =
@@ -915,7 +1122,7 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
 
   let exportBundle: string | undefined;
   if (updateOk && finalOk) {
-    markStep(steps, 'export', 'in_progress');
+    markStep(logger, steps, 'export', 'in_progress');
     const exporter = createExportExecutor();
     const interimReport = await buildReport({
       siteId: updateRequest.siteId,
@@ -945,13 +1152,13 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
         timestamp: new Date().toISOString(),
         code: 'export_failed',
       });
-      markStep(steps, 'export', 'failed', { error: exportResult.error });
+      markStep(logger, steps, 'export', 'failed', { error: exportResult.error });
     } else {
       exportBundle = exportResult.bundlePath;
-      markStep(steps, 'export', 'success', { bundlePath: exportBundle });
+      markStep(logger, steps, 'export', 'success', { bundlePath: exportBundle });
     }
   } else {
-    markStep(steps, 'export', 'failed', { skipped: !updateOk || !finalOk });
+    markStep(logger, steps, 'export', 'failed', { skipped: !updateOk || !finalOk });
   }
 
   const status: BuildReport['status'] = updateOk && finalOk ? 'success' : 'failed';
@@ -976,7 +1183,7 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
     report.healingCycles = healingCycles.length ? healingCycles : undefined;
   }
 
-  markStep(steps, 'summary', 'in_progress');
+  markStep(logger, steps, 'summary', 'in_progress');
   const summary = await generateUpdateSummary(
     runtimeOptions,
     updateRequest.prompt,
@@ -985,9 +1192,12 @@ export const runUpdate = async (input: UpdateOrchestratorInput): Promise<BuildRe
   );
   if (summary) {
     report.summary = summary;
-    markStep(steps, 'summary', 'success');
+    markStep(logger, steps, 'summary', 'success');
   } else {
-    markStep(steps, 'summary', 'success', { skipped: true, reason: 'summary generation failed' });
+    markStep(logger, steps, 'summary', 'success', {
+      skipped: true,
+      reason: 'summary generation failed',
+    });
   }
 
   return report;

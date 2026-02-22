@@ -7,6 +7,7 @@ import { registerTools } from '@sisu-ai/mw-register-tools';
 import { skillsMiddleware } from '@sisu-ai/mw-skills';
 import { iterativeToolCalling } from '@sisu-ai/mw-tool-calling';
 import { traceViewer } from '@sisu-ai/mw-trace-viewer';
+import { loopUntil, sequence } from '@sisu-ai/mw-control-flow';
 import { DEFAULT_TOOL_ALLOWLIST, createToolset, type ToolName } from './tools.js';
 import { ensureBuildState, recordBuildError } from './state.js';
 import { validateSkillsCompatibility } from './skill-compat.js';
@@ -26,6 +27,8 @@ export type AgentRuntimeOptions = {
   conversationWindow?: number;
   browserCdpEndpoint?: string;
   autoConnectBrowser?: boolean;
+  useControlFlow?: boolean;
+  controlFlowMaxLoops?: number;
 };
 
 const DEFAULT_SYSTEM_PROMPT =
@@ -171,6 +174,26 @@ export const createAgentRuntime = (options: AgentRuntimeOptions) => {
       autoConnectBrowser: options.autoConnectBrowser ?? true,
     });
 
+  const controlFlowToolLoop = loopUntil(
+    (ctx: { state?: Record<string, unknown> }) =>
+      Boolean(ctx.state?.linopressToolLoopDone ?? false),
+    sequence([
+      iterativeToolCalling,
+      async (ctx: { state?: Record<string, unknown> }, next: () => Promise<void>) => {
+        await next();
+        const messages = Array.isArray((ctx as { messages?: unknown }).messages)
+          ? ((ctx as { messages?: unknown }).messages as Array<{ role?: string }>).slice(-1)
+          : [];
+        const lastRole = messages[0]?.role;
+        if (!ctx.state) ctx.state = {};
+        ctx.state.linopressToolLoopDone = lastRole !== 'tool';
+      },
+    ]),
+    { max: options.controlFlowMaxLoops ?? 6 },
+  );
+
+  const toolMiddleware = options.useControlFlow ? controlFlowToolLoop : iterativeToolCalling;
+
   const agent = new Agent()
     .use(errorRecorder())
     .use(traceViewer())
@@ -188,7 +211,7 @@ export const createAgentRuntime = (options: AgentRuntimeOptions) => {
     .use(inputToMessage)
     .use(conversationBuffer({ window: options.conversationWindow ?? 8 }))
     .use(withTimeout(options.skillTimeoutMs))
-    .use(iterativeToolCalling);
+    .use(toolMiddleware);
 
   const controller = new AbortController();
   registerShutdownHandlers(controller);

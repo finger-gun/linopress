@@ -10,7 +10,7 @@ Rules:
 - After each write, read back the content to confirm it changed.
 - If a target is missing, follow the plan fallbacks.
 
-Return a JSON object with:
+Return ONLY a JSON object with:
 {
 "writes": [
 { "target": "post:<id>" | "file:/path/...", "status": "success" | "skipped" | "failed", "notes": "..." }

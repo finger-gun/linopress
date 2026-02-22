@@ -93,7 +93,7 @@ export interface UpdateRequest {
 export interface BuildReport {
   siteId: string;
   status: 'success' | 'failed' | 'partial';
-  mode: 'build' | 'update';
+  mode: 'build' | 'update' | 'selfimprove';
   steps: BuildStep[];
   validation: ValidationResult;
   screenshots: string[];
